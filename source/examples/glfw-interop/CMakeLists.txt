@@ -1,17 +1,22 @@
 
-set(target shared-context)
+set(target glfw-interop)
 message(STATUS "Example ${target}")
 
 
 # External libraries
 
-# ...
+find_package(GLFW QUIET)
+
+if (NOT GLFW_FOUND)
+    message("Example ${target} skipped: GLFW not found")
+    return()
+endif()
 
 
 # Includes
 
 include_directories(
-    # e.g., ${TRDP_INCLUDE_DIR}
+    ${GLFW_INCLUDE_DIR}
 )
 
 include_directories(
@@ -23,7 +28,7 @@ include_directories(
 # Libraries
 
 set(libs
-    # e.g., ${TRDP_LIBRARIES}
+    ${GLFW_LIBRARY}
     glheadless
 )
 

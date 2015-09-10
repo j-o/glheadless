@@ -30,6 +30,7 @@ project(${META_PROJECT_NAME} C CXX)
 option(OPTION_PORTABLE_INSTALL  "Install into a self-contained directory." OFF)
 option(OPTION_BUILD_STATIC      "Build static libraries." OFF)
 option(OPTION_BUILD_TESTS       "Build tests (if gmock and gtest are found)." ON)
+option(OPTION_BUILD_EXAMPLES    "Build examples." OFF)
 
 if(OPTION_BUILD_STATIC)
    set(BUILD_SHARED_LIBS OFF)

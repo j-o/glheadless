@@ -15,8 +15,10 @@ set(IDE_FOLDER "")
 add_subdirectory(glheadless)
 
 # Applications
-set(IDE_FOLDER "Examples")
-add_subdirectory(examples)
+if(OPTION_BUILD_EXAMPLES)
+    set(IDE_FOLDER "Examples")
+    add_subdirectory(examples)
+endif()
 
 # Tests
 set(IDE_FOLDER "Tests")

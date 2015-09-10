@@ -1,6 +1,6 @@
 
 set(target basic-context)
-message(STATUS "App ${target}")
+message(STATUS "Example ${target}")
 
 
 # External libraries
