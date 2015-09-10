@@ -1,5 +1,5 @@
 
-set(target basic-context-creation)
+set(target shared-context)
 message(STATUS "App ${target}")
 
 

@@ -25,6 +25,10 @@ public:
 
 
 public:
+    static Context currentContext();
+
+
+public:
     Context();
     Context(const Context&) = delete;
     Context(Context&& other);
@@ -46,9 +50,13 @@ public:
     void setAttribute(int name, int value);
 
     void create();
+    void create(const Context& shared);
 
     void makeCurrent() noexcept;
     void doneCurrent() noexcept;
+
+    Implementation* implementation();
+    const Implementation* implementation() const;
 
     Context& operator=(const Context&) = delete;
     Context& operator=(Context&& other);

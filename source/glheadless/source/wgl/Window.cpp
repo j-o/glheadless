@@ -1,6 +1,7 @@
 #include "Window.h"
 
 #include <mutex>
+#include <cassert>
 
 #include <Windows.h>
 
@@ -20,7 +21,7 @@ Window::WindowClass::WindowClass()
     //
     auto success = GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, nullptr, &m_instanceHandle);
     if (!success) {
-        throw std::system_error(getLastErrorCode(), "Failed to get module handle");
+        throw std::system_error(getLastErrorCode(), "GetModuleHandleEx failed");
     }
 
 
@@ -43,7 +44,7 @@ Window::WindowClass::WindowClass()
 
     m_id = RegisterClassEx(&windowClass);
     if (m_id == 0) {
-        throw std::system_error(getLastErrorCode(), "Failed to register window class");
+        throw std::system_error(getLastErrorCode(), "RegisterClassEx failed");
     }
 }
 
@@ -55,7 +56,8 @@ Window::WindowClass::WindowClass(WindowClass&& other) {
 
 Window::WindowClass::~WindowClass() {
     if (m_id != 0) {
-        UnregisterClass(id(), m_instanceHandle);
+        const auto success = UnregisterClass(id(), m_instanceHandle);
+        assert(success && "UnregisterClass");
     }
 }
 
@@ -75,14 +77,15 @@ Window::WindowClass& Window::WindowClass::operator=(WindowClass&& other) {
 
 
 Window::Window()
-: m_windowClass(getWindowClass()) {
+: m_windowClass(getWindowClass())
+, m_owning(true) {
     //
     // Get module handle
     //
     HMODULE instance;
     auto success = GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, nullptr, &instance);
     if (!success) {
-        throw std::system_error(getLastErrorCode(), "Failed to get module handle");
+        throw std::system_error(getLastErrorCode(), "GetModuleHandleEx failed");
     }
 
 
@@ -101,7 +104,7 @@ Window::Window()
                                   instance,
                                   nullptr);
     if (m_windowHandle == nullptr) {
-        throw std::system_error(getLastErrorCode(), "Failed to create window");
+        throw std::system_error(getLastErrorCode(), "CreateWindow failed");
     }
 
 
@@ -110,8 +113,15 @@ Window::Window()
     //
     m_deviceContextHandle = GetDC(m_windowHandle);
     if (m_deviceContextHandle == nullptr) {
-        throw std::system_error(getLastErrorCode(), "Failed to get device context");
+        throw std::system_error(getLastErrorCode(), "GetDC failed");
     }
+}
+
+
+Window::Window(HWND windowHandle, HDC deviceContextHandle)
+: m_windowHandle(windowHandle)
+, m_deviceContextHandle(deviceContextHandle)
+, m_owning(false) {
 }
 
 
@@ -121,11 +131,14 @@ Window::Window(Window&& other) {
 
 
 Window::~Window() {
-    if (m_deviceContextHandle != nullptr) {
-        ReleaseDC(m_windowHandle, m_deviceContextHandle);
-    }
-    if (m_windowHandle != nullptr) {
-        DestroyWindow(m_windowHandle);
+    if (m_owning) {
+        if (m_deviceContextHandle != nullptr) {
+            ReleaseDC(m_windowHandle, m_deviceContextHandle);
+        }
+        if (m_windowHandle != nullptr) {
+            const auto success = DestroyWindow(m_windowHandle);
+            assert(success && "DestroyWindow");
+        }
     }
 }
 
@@ -143,6 +156,7 @@ Window& Window::operator=(Window&& other) {
     other.m_deviceContextHandle = nullptr;
 
     m_windowClass = std::move(other.m_windowClass);
+    m_owning = other.m_owning;
 
     return *this;
 }

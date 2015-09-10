@@ -1,1 +1,2 @@
-add_subdirectory(basic-context-creation)
+add_subdirectory(basic-context)
+add_subdirectory(shared-context)

@@ -8,6 +8,7 @@
 
 #include "Window.h"
 #include "Platform.h"
+#include <glheadless/error.h>
 
 
 namespace glheadless {
@@ -83,8 +84,32 @@ std::vector<int> createContextAttributeList(const Context& context) {
 } // unnamed namespace
 
 
+Context Implementation::currentContext() {
+    const auto contextHandle = wglGetCurrentContext();
+    if (contextHandle == nullptr) {
+        throw std::system_error(make_error_code(Error::CONTEXT_NOT_CURRENT), "wglGetCurrentContext returned nullptr");
+    }
+
+    const auto deviceContextHandle = wglGetCurrentDC();
+    if (deviceContextHandle == nullptr) {
+        throw std::system_error(make_error_code(Error::CONTEXT_NOT_CURRENT), "wglGetCurrentDC returned nullptr");
+    }
+
+    const auto windowHandle = WindowFromDC(deviceContextHandle);
+    if (windowHandle == nullptr) {
+        throw std::system_error(make_error_code(Error::CONTEXT_NOT_CURRENT), "WindowFromDC returned nullptr");
+    }
+
+    Context context;
+    context.implementation()->setExternal(windowHandle, deviceContextHandle, contextHandle);
+
+    return std::move(context);
+}
+
+
 Implementation::Implementation()
-: m_contextHandle(nullptr) {
+: m_contextHandle(nullptr)
+, m_owning(true) {
 }
 
 
@@ -94,12 +119,16 @@ Implementation::Implementation(Implementation&& other) {
 
 
 Implementation::~Implementation() {
-    if (m_contextHandle != nullptr) {
-        const auto currentHandle = wglGetCurrentContext();
-        if (currentHandle == m_contextHandle) {
-            wglMakeCurrent(nullptr, nullptr);
+    if (m_owning) {
+        if (m_contextHandle != nullptr) {
+            const auto currentHandle = wglGetCurrentContext();
+            if (currentHandle == m_contextHandle) {
+                const auto success = wglMakeCurrent(nullptr, nullptr);
+                assert(success && "wglMakeCurrent(nullptr, nullptr)");
+            }
+            const auto success = wglDeleteContext(m_contextHandle);
+            assert(success && "wglDeleteContext");
         }
-        wglDeleteContext(m_contextHandle);
     }
 }
 
@@ -111,10 +140,27 @@ void Implementation::create(Context* context) {
 }
 
 
+void Implementation::create(Context* context, const Context* shared) {
+    m_window = std::make_unique<Window>();
+    setPixelFormat(context);
+    createContext(context, shared->implementation()->m_contextHandle);
+}
+
+
+void Implementation::setExternal(HWND window, HDC deviceContext, HGLRC context) {
+    m_window = std::make_unique<Window>(window, deviceContext);
+    m_contextHandle = context;
+    m_owning = false;
+}
+
+
 Implementation& Implementation::operator=(Implementation&& other) {
     m_window = std::move(other.m_window);
+
     m_contextHandle = other.m_contextHandle;
     other.m_contextHandle = nullptr;
+
+    m_owning = other.m_owning;
 
     return *this;
 }
@@ -143,10 +189,10 @@ void Implementation::setPixelFormat(Context* context) {
 }
 
 
-void Implementation::createContext(Context* context) {
+void Implementation::createContext(Context* context, HGLRC shared) {
     const auto contextAttributes = createContextAttributeList(*context);
 
-    m_contextHandle = Platform::instance()->wglCreateContextAttribsARB(m_window->deviceContext(), nullptr, contextAttributes.data());
+    m_contextHandle = Platform::instance()->wglCreateContextAttribsARB(m_window->deviceContext(), shared, contextAttributes.data());
     if (m_contextHandle == nullptr) {
         throw std::system_error(getLastErrorCode(), "wglCreateContextAttribsARB failed");
     }
@@ -155,13 +201,13 @@ void Implementation::createContext(Context* context) {
 
 void Implementation::makeCurrent(Context* /*context*/) noexcept {
     const auto success = wglMakeCurrent(m_window->deviceContext(), m_contextHandle);
-    assert(success);
+    assert(success && "wglMakeCurrent");
 }
 
 
 void Implementation::doneCurrent(Context* /*context*/) noexcept {
     const auto success = wglMakeCurrent(nullptr, nullptr);
-    assert(success);
+    assert(success && "wglMakeCurrent(nullptr, nullptr)");
 }
 
 

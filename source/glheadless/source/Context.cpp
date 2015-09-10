@@ -8,11 +8,16 @@
 namespace glheadless {
 
 
+Context Context::currentContext() {
+    return Implementation::currentContext();
+}
+
+
 Context::Context()
-: m_implementation(std::make_unique<Implementation>())
+: m_version(3, 2)
 , m_profile(ContextProfile::CORE)
-, m_version(3, 2)
-, m_debugContext(false) {
+, m_debugContext(false)
+, m_implementation(std::make_unique<Implementation>()) {
 }
 
 
@@ -80,6 +85,11 @@ void Context::create() {
 }
 
 
+void Context::create(const Context& shared) {
+    m_implementation->create(this, &shared);
+}
+
+
 void Context::makeCurrent() noexcept {
     m_implementation->makeCurrent(this);
 }
@@ -87,6 +97,16 @@ void Context::makeCurrent() noexcept {
 
 void Context::doneCurrent() noexcept {
     m_implementation->doneCurrent(this);
+}
+
+
+Implementation* Context::implementation() {
+    return m_implementation.get();
+}
+
+
+const Implementation* Context::implementation() const {
+    return m_implementation.get();
 }
 
 

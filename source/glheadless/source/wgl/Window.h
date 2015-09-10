@@ -11,6 +11,7 @@ namespace glheadless {
 class Window {
 public:
     Window();
+    Window(HWND windowHandle, HDC deviceContextHandle);
     Window(const Window&) = delete;
     Window(Window&& other);
     ~Window();
@@ -45,6 +46,7 @@ private:
     HWND m_windowHandle;
     HDC m_deviceContextHandle;
     std::shared_ptr<WindowClass> m_windowClass;
+    bool m_owning;
 
 
 private:
