@@ -171,5 +171,5 @@ create_revision_file(${CMAKE_BINARY_DIR}/revision ${INSTALL_ROOT})
 #
 
 add_subdirectory(source)
-add_subdirectory(docs)
-add_subdirectory(packages)
+#add_subdirectory(docs)
+#add_subdirectory(packages)

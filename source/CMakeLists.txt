@@ -21,5 +21,5 @@ if(OPTION_BUILD_EXAMPLES)
 endif()
 
 # Tests
-set(IDE_FOLDER "Tests")
-add_subdirectory(tests)
+#set(IDE_FOLDER "Tests")
+#add_subdirectory(tests)

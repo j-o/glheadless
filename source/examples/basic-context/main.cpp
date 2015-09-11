@@ -1,7 +1,11 @@
 #include <iostream> 
 
+#if defined(_WIN32)
 #include <Windows.h>
 #include <gl/GL.h>
+#elif defined(__APPLE__)
+#include <OpenGL/gl.h>
+#endif
 
 #include <glheadless/Context.h>
 
