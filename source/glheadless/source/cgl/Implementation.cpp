@@ -11,6 +11,8 @@
 #include <glheadless/Context.h>
 #include <glheadless/error.h>
 
+#include "error.h"
+
 
 namespace glheadless {
 
@@ -18,23 +20,39 @@ namespace glheadless {
 namespace {
 
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 const auto k_booleanAttributes = std::set<_CGLPixelFormatAttribute> {
     kCGLPFAAllRenderers,
     kCGLPFADoubleBuffer,
     kCGLPFAStereo,
     kCGLPFAMinimumPolicy,
     kCGLPFAMaximumPolicy,
+    kCGLPFAOffScreen,
+    kCGLPFAFullScreen,
+    kCGLPFAAuxDepthStencil,
     kCGLPFAColorFloat,
     kCGLPFAMultisample,
     kCGLPFASupersample,
     kCGLPFASampleAlpha,
+    kCGLPFASingleRenderer,
     kCGLPFANoRecovery,
     kCGLPFAAccelerated,
     kCGLPFAClosestPolicy,
+    kCGLPFARobust,
     kCGLPFABackingStore,
+    kCGLPFAMPSafe,
+    kCGLPFAWindow,
+    kCGLPFAMultiScreen,
+    kCGLPFACompliant,
+    kCGLPFAPBuffer,
+    kCGLPFARemotePBuffer,
     kCGLPFAAllowOfflineRenderers,
     kCGLPFAAcceleratedCompute
 };
+
+#pragma GCC diagnostic pop
 
 
 std::vector<_CGLPixelFormatAttribute> createPixelFormatAttributeList(const Context* context) {
@@ -49,7 +67,7 @@ std::vector<_CGLPixelFormatAttribute> createPixelFormatAttributeList(const Conte
         attributes[kCGLPFAColorSize] = pixelFormat.colorBits() / 4 * 3; // factor out alpha size
         attributes[kCGLPFAAlphaSize] = pixelFormat.colorBits() / 4;
     } else {
-        throw std::system_error(Error::UNSUPPORTED_ATTRIBUTE, "Separate RED, GREEN, BLUE buffer sizes are not supported on OS X");
+        throw std::system_error(kCGLBadAttribute, "Separate RED, GREEN, BLUE buffer sizes are not supported on OS X");
     }
 
     attributes[kCGLPFADepthSize] = pixelFormat.depthBits();
@@ -150,7 +168,7 @@ void Implementation::setPixelFormat(Context *context) {
     GLint numVirtualScreens;
     const auto error = CGLChoosePixelFormat(pixelFormatAttributes.data(), &m_pixelFormat, &numVirtualScreens);
     if (error != kCGLNoError) {
-        throw std::system_error(Error::UNKNOWN_ERROR, CGLErrorString(error));
+        throw std::system_error(error, "CGLChoosePixelFormat failed");
     }
 }
 
@@ -158,7 +176,7 @@ void Implementation::setPixelFormat(Context *context) {
 void Implementation::createContext(CGLContextObj shared) {
     const auto error = CGLCreateContext(m_pixelFormat, shared, &m_context);
     if (error != kCGLNoError) {
-        throw std::system_error(Error::UNKNOWN_ERROR, CGLErrorString(error));
+        throw std::system_error(error, "CGLCreateContext failed");
     }
 }
 
