@@ -7,7 +7,9 @@ namespace glheadless {
 
 
 enum class Error : int {
-    CONTEXT_NOT_CURRENT
+    CONTEXT_NOT_CURRENT,
+    UNSUPPORTED_ATTRIBUTE,
+    UNKNOWN_ERROR
 };
 
 

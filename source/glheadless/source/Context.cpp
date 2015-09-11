@@ -2,6 +2,8 @@
 
 #ifdef _WIN32
 #include "wgl/Implementation.h"
+#elif defined(__APPLE__)
+#include "cgl/Implementation.h"
 #endif
 
 

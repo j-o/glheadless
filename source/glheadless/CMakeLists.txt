@@ -63,6 +63,11 @@ if(WIN32)
         ${source_path}/wgl/Window.h
         ${source_path}/wgl/Window.cpp
     )
+elseif(APPLE)
+    set(sources ${sources}
+        ${source_path}/cgl/Implementation.h
+        ${source_path}/cgl/Implementation.cpp
+    )
 endif()
 
 # Group source files
