@@ -1,11 +1,8 @@
 #pragma once
 
-#include <system_error>
-#include <string>
-
 #include <OpenGL/CGLTypes.h>
 
-#include <glheadless/error.h>
+#include "../AbstractImplementation.h"
 
 
 namespace glheadless {
@@ -14,7 +11,7 @@ namespace glheadless {
 class Context;
 
 
-class Implementation {
+class Implementation : public AbstractImplementation {
 public:
     static Context currentContext();
 
@@ -32,9 +29,6 @@ public:
     void doneCurrent() noexcept;
 
     bool valid() const;
-    const std::error_code& lastErrorCode() const;
-    const std::string& lastErrorMessage() const;
-    void setErrorCallback(const ErrorCallback& callback);
 
     Implementation& operator=(const Implementation&) = delete;
     Implementation& operator=(Implementation&& other);
@@ -45,16 +39,11 @@ private:
     bool createContext(CGLContextObj shared = nullptr);
     void setExternal(CGLContextObj context, CGLPixelFormatObj pixelFormat);
 
-    bool setError(const std::error_code& code, const std::string& message);
-
 
 private:
     CGLContextObj m_context;
     CGLPixelFormatObj m_pixelFormat;
     bool m_owning;
-    std::error_code m_lastErrorCode;
-    std::string m_lastErrorMessage;
-    ErrorCallback m_errorCallback;
 };
 
     

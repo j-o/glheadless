@@ -125,8 +125,7 @@ Context Implementation::currentContext() {
 Implementation::Implementation()
 : m_context(nullptr)
 , m_pixelFormat(nullptr)
-, m_owning(true)
-, m_errorCallback(nullErrorCallback){
+, m_owning(true) {
 }
 
 
@@ -189,6 +188,8 @@ void Implementation::setExternal(CGLContextObj context, CGLPixelFormatObj pixelF
 
 
 Implementation& Implementation::operator=(Implementation&& other) {
+    AbstractImplementation::operator=(std::forward<Implementation>(other));
+
     m_context = other.m_context;
     other.m_pixelFormat = nullptr;
 
@@ -214,34 +215,9 @@ void Implementation::doneCurrent() noexcept {
 
 
 bool Implementation::valid() const {
-    return !m_lastErrorCode
+    return !lastErrorCode()
         && m_context != nullptr
         && m_pixelFormat != nullptr;
-}
-
-
-bool Implementation::setError(const std::error_code& code, const std::string& message) {
-    m_lastErrorCode = code;
-    m_lastErrorMessage = message;
-
-    m_errorCallback(m_lastErrorCode, m_lastErrorMessage);
-
-    return !m_lastErrorCode;
-}
-
-
-const std::error_code& Implementation::lastErrorCode() const {
-    return m_lastErrorCode;
-}
-
-
-const std::string& Implementation::lastErrorMessage() const {
-    return m_lastErrorMessage;
-}
-
-
-void Implementation::setErrorCallback(const ErrorCallback& callback) {
-    m_errorCallback = callback;
 }
 
 

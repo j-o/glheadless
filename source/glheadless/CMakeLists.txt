@@ -49,6 +49,8 @@ set(api_includes
 )
 
 set(sources
+    ${source_path}/AbstractImplementation.h
+    ${source_path}/AbstractImplementation.cpp
     ${source_path}/Context.cpp
     ${source_path}/error.cpp
     ${source_path}/PixelFormat.cpp
