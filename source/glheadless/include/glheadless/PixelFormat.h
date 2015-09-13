@@ -12,26 +12,25 @@ class GLHEADLESS_API PixelFormat {
 public:
     PixelFormat();
 
-    int colorBits() const;
-    void setColorBits(const int colorBits);
+    void setColorBits(int redBits, int greenBits, int blueBits, int alphaBits);
 
     int redBits() const;
-    void setRedBits(const int redBits);
+    void setRedBits(int redBits);
 
     int greenBits() const;
-    void setGreenBits(const int greenBits);
+    void setGreenBits(int greenBits);
 
     int blueBits() const;
-    void setBlueBits(const int blueBits);
+    void setBlueBits(int blueBits);
 
     int alphaBits() const;
-    void setAlphaBits(const int alphaBits);
+    void setAlphaBits(int alphaBits);
 
     int depthBits() const;
-    void setDepthBits(const int depthBits);
+    void setDepthBits(int depthBits);
 
     int stencilBits() const;
-    void setStencilBits(const int stencilBits);
+    void setStencilBits(int stencilBits);
 
     bool doubleBuffer() const;
     void setDoubleBuffer(const bool doubleBuffer);
@@ -44,7 +43,6 @@ public:
 
 
 private:
-    int m_colorBits;
     int m_redBits;
     int m_greenBits;
     int m_blueBits;

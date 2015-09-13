@@ -5,11 +5,10 @@ namespace glheadless {
 
 
 PixelFormat::PixelFormat()
-: m_colorBits(32)
-, m_redBits(0)
-, m_greenBits(0)
-, m_blueBits(0)
-, m_alphaBits(0)
+: m_redBits(8)
+, m_greenBits(8)
+, m_blueBits(8)
+, m_alphaBits(8)
 , m_depthBits(24)
 , m_stencilBits(8)
 , m_doubleBuffer(true)
@@ -17,18 +16,11 @@ PixelFormat::PixelFormat()
 }
 
 
-int PixelFormat::colorBits() const {
-    return m_colorBits;
-}
-
-
-void PixelFormat::setColorBits(const int colorBits) {
-    m_colorBits = colorBits;
-    m_redBits = 0;
-    m_greenBits = 0;
-    m_blueBits = 0;
-    m_greenBits = 0;
-    m_alphaBits = 0;
+void PixelFormat::setColorBits(const int redBits, const int greenBits, const int blueBits, const int alphaBits) {
+    m_redBits = redBits;
+    m_greenBits = greenBits;
+    m_blueBits = blueBits;
+    m_alphaBits = alphaBits;
 }
 
 
@@ -39,7 +31,6 @@ int PixelFormat::redBits() const {
 
 void PixelFormat::setRedBits(const int redBits) {
     m_redBits = redBits;
-    m_colorBits = 0;
 }
 
 int PixelFormat::greenBits() const {
@@ -49,7 +40,6 @@ int PixelFormat::greenBits() const {
 
 void PixelFormat::setGreenBits(const int greenBits) {
     m_greenBits = greenBits;
-    m_colorBits = 0;
 }
 
 
@@ -60,7 +50,6 @@ int PixelFormat::blueBits() const {
 
 void PixelFormat::setBlueBits(const int blueBits) {
     m_blueBits = blueBits;
-    m_colorBits = 0;
 }
 
 
@@ -71,7 +60,6 @@ int PixelFormat::alphaBits() const {
 
 void PixelFormat::setAlphaBits(const int alphaBits) {
     m_alphaBits = alphaBits;
-    m_colorBits = 0;
 }
 
 

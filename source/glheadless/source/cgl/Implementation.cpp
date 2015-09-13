@@ -60,23 +60,14 @@ std::vector<_CGLPixelFormatAttribute> createPixelFormatAttributeList(const Conte
 
     const auto& pixelFormat = context->pixelFormat();
 
+    attributes[kCGLPFAAccelerated] = GL_TRUE;
+    attributes[kCGLPFAClosestPolicy] = GL_TRUE;
     attributes[kCGLPFADoubleBuffer] = pixelFormat.doubleBuffer() ? GL_TRUE : GL_FALSE;
     attributes[kCGLPFAStereo] = pixelFormat.stereo() ? GL_TRUE : GL_FALSE;
-
-    if (pixelFormat.colorBits() > 0) {
-        attributes[kCGLPFAColorSize] = pixelFormat.colorBits() / 4 * 3; // factor out alpha size
-        attributes[kCGLPFAAlphaSize] = pixelFormat.colorBits() / 4;
-    } else {
-        throw std::system_error(kCGLBadAttribute, "Separate RED, GREEN, BLUE buffer sizes are not supported on OS X");
-    }
-
+    attributes[kCGLPFAColorSize] = pixelFormat.redBits() + pixelFormat.greenBits() + pixelFormat.blueBits();
+    attributes[kCGLPFAAlphaSize] = pixelFormat.alphaBits();
     attributes[kCGLPFADepthSize] = pixelFormat.depthBits();
     attributes[kCGLPFAStencilSize] = pixelFormat.stencilBits();
-
-    for (const auto& attribute : pixelFormat.attributes()) {
-        attributes[static_cast<_CGLPixelFormatAttribute>(attribute.first)] = attribute.second;
-    }
-
 
     if (context->version().first >= 4) {
         attributes[kCGLPFAOpenGLProfile] = kCGLOGLPVersion_GL4_Core;
@@ -84,6 +75,10 @@ std::vector<_CGLPixelFormatAttribute> createPixelFormatAttributeList(const Conte
         attributes[kCGLPFAOpenGLProfile] = kCGLOGLPVersion_GL3_Core;
     } else {
         attributes[kCGLPFAOpenGLProfile] = kCGLOGLPVersion_Legacy;
+    }
+
+    for (const auto& attribute : pixelFormat.attributes()) {
+        attributes[static_cast<_CGLPixelFormatAttribute>(attribute.first)] = attribute.second;
     }
 
 
@@ -111,12 +106,12 @@ std::vector<_CGLPixelFormatAttribute> createPixelFormatAttributeList(const Conte
 Context Implementation::currentContext() {
     const auto contextHandle = CGLGetCurrentContext();
     if (contextHandle == nullptr) {
-        throw std::system_error(Error::CONTEXT_NOT_CURRENT, "CGLGetCurrentContext return nullptr");
+        throw std::system_error(Error::CONTEXT_NOT_CURRENT, "CGLGetCurrentContext returned nullptr");
     }
 
     const auto pixelFormat = CGLGetPixelFormat(contextHandle);
     if (pixelFormat == nullptr) {
-        throw std::system_error(Error::CONTEXT_NOT_CURRENT, "CGLGetPixelFormat return nullptr");
+        throw std::system_error(Error::CONTEXT_NOT_CURRENT, "CGLGetPixelFormat returned nullptr");
     }
 
     Context context;

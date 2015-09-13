@@ -22,16 +22,10 @@ std::vector<int> createPixelFormatAttributeList(const PixelFormat& pixelFormat) 
 
     attributes[WGL_DOUBLE_BUFFER_ARB] = pixelFormat.doubleBuffer() ? GL_TRUE : GL_FALSE;
     attributes[WGL_STEREO_ARB] = pixelFormat.stereo() ? GL_TRUE : GL_FALSE;
-
-    if (pixelFormat.colorBits() > 0) {
-        attributes[WGL_COLOR_BITS_ARB] = pixelFormat.colorBits();
-    } else {
-        attributes[WGL_RED_BITS_ARB] = pixelFormat.redBits();
-        attributes[WGL_GREEN_BITS_ARB] = pixelFormat.greenBits();
-        attributes[WGL_BLUE_BITS_ARB] = pixelFormat.blueBits();
-        attributes[WGL_ALPHA_BITS_ARB] = pixelFormat.alphaBits();
-    }
-
+    attributes[WGL_RED_BITS_ARB] = pixelFormat.redBits();
+    attributes[WGL_GREEN_BITS_ARB] = pixelFormat.greenBits();
+    attributes[WGL_BLUE_BITS_ARB] = pixelFormat.blueBits();
+    attributes[WGL_ALPHA_BITS_ARB] = pixelFormat.alphaBits();
     attributes[WGL_DEPTH_BITS_ARB] = pixelFormat.depthBits();
     attributes[WGL_STENCIL_BITS_ARB] = pixelFormat.stencilBits();
 
