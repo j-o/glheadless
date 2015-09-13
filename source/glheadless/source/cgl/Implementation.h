@@ -5,6 +5,8 @@
 
 #include <OpenGL/CGLTypes.h>
 
+#include <glheadless/error.h>
+
 
 namespace glheadless {
 
@@ -32,6 +34,7 @@ public:
     bool valid() const;
     const std::error_code& lastErrorCode() const;
     const std::string& lastErrorMessage() const;
+    void setErrorCallback(const ErrorCallback& callback);
 
     Implementation& operator=(const Implementation&) = delete;
     Implementation& operator=(Implementation&& other);
@@ -51,6 +54,7 @@ private:
     bool m_owning;
     std::error_code m_lastErrorCode;
     std::string m_lastErrorMessage;
+    ErrorCallback m_errorCallback;
 };
 
     

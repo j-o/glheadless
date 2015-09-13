@@ -3,9 +3,10 @@
 #include <glheadless/glheadless_api.h>
 
 #include <memory>
+#include <system_error>
 
 #include <glheadless/PixelFormat.h>
-#include <system_error>
+#include <glheadless/error.h>
 
 
 namespace glheadless {
@@ -59,6 +60,7 @@ public:
     bool valid() const;
     const std::error_code& lastErrorCode() const;
     const std::string& lastErrorMessage() const;
+    void setErrorCallback(const ErrorCallback& callback);
 
     Implementation* implementation();
     const Implementation* implementation() const;

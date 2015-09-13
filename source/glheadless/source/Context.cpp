@@ -139,4 +139,9 @@ const std::string& Context::lastErrorMessage() const {
 }
 
 
+void Context::setErrorCallback(const ErrorCallback& callback) {
+    m_implementation->setErrorCallback(callback);
+}
+
+
 }  // namespace glheadless

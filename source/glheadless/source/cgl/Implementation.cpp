@@ -125,7 +125,8 @@ Context Implementation::currentContext() {
 Implementation::Implementation()
 : m_context(nullptr)
 , m_pixelFormat(nullptr)
-, m_owning(true) {
+, m_owning(true)
+, m_errorCallback(nullErrorCallback){
 }
 
 
@@ -222,6 +223,9 @@ bool Implementation::valid() const {
 bool Implementation::setError(const std::error_code& code, const std::string& message) {
     m_lastErrorCode = code;
     m_lastErrorMessage = message;
+
+    m_errorCallback(m_lastErrorCode, m_lastErrorMessage);
+
     return !m_lastErrorCode;
 }
 
@@ -233,6 +237,11 @@ const std::error_code& Implementation::lastErrorCode() const {
 
 const std::string& Implementation::lastErrorMessage() const {
     return m_lastErrorMessage;
+}
+
+
+void Implementation::setErrorCallback(const ErrorCallback& callback) {
+    m_errorCallback = callback;
 }
 
 
