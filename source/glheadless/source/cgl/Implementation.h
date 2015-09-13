@@ -1,5 +1,8 @@
 #pragma once
 
+#include <system_error>
+#include <string>
+
 #include <OpenGL/CGLTypes.h>
 
 
@@ -20,26 +23,34 @@ public:
     Implementation(Implementation&& other);
     ~Implementation();
 
-    void create(Context* context);
-    void create(Context* context, const Context* shared);
+    bool create(Context* context);
+    bool create(Context* context, const Context* shared);
 
-    void makeCurrent(Context* context) noexcept;
-    void doneCurrent(Context* context) noexcept;
+    void makeCurrent() noexcept;
+    void doneCurrent() noexcept;
+
+    bool valid() const;
+    const std::error_code& lastErrorCode() const;
+    const std::string& lastErrorMessage() const;
 
     Implementation& operator=(const Implementation&) = delete;
     Implementation& operator=(Implementation&& other);
 
 
 private:
-    void setPixelFormat(Context* context);
-    void createContext(CGLContextObj shared = nullptr);
+    bool setPixelFormat(Context* context);
+    bool createContext(CGLContextObj shared = nullptr);
     void setExternal(CGLContextObj context, CGLPixelFormatObj pixelFormat);
+
+    bool setError(const std::error_code& code, const std::string& message);
 
 
 private:
     CGLContextObj m_context;
     CGLPixelFormatObj m_pixelFormat;
     bool m_owning;
+    std::error_code m_lastErrorCode;
+    std::string m_lastErrorMessage;
 };
 
     

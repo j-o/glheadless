@@ -10,13 +10,14 @@ namespace glheadless {
 namespace {
 
 
-const auto NUM_ERRORS = 3;
+const auto NUM_ERRORS = 4;
 
 
-const auto k_errorMessages = std::array<std::string, NUM_ERRORS>{{
+const auto k_errorMessages = std::array<std::string, NUM_ERRORS + 1>{{
+    /* SUCCESS */               "Success",
     /* CONTEXT_NOT_CURRENT */   "Context not current",
     /* UNSUPPORTED_ATTRIBTUE */ "Unsupported attribute",
-    /* UNKNOWN_ERROR */ "Unknown error"
+    /* UNKNOWN_ERROR */         "Unknown error"
 }};
 
 

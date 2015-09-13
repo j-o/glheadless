@@ -16,11 +16,10 @@ using namespace glheadless;
 int main(int /*argc*/, char* /*argv*/[]) {
     Context context;
     context.setVersion(4, 5);
+    context.create();
 
-    try {
-        context.create();
-    } catch (std::exception& e) {
-        std::cerr << e.what() << std::endl;
+    if (!context.valid()) {
+        std::cerr << context.lastErrorMessage() << ": " << context.lastErrorCode().message() << " (" << context.lastErrorCode() << ")" << std::endl;
         return EXIT_FAILURE;
     }
 
@@ -34,11 +33,10 @@ int main(int /*argc*/, char* /*argv*/[]) {
 
     Context shared;
     shared.setVersion(4, 5);
+    shared.create(context);
 
-    try {
-        shared.create(context);
-    } catch (std::exception& e) {
-        std::cerr << e.what() << std::endl;
+    if (!shared.valid()) {
+        std::cerr << shared.lastErrorMessage() << ": " << shared.lastErrorCode().message() << " (" << shared.lastErrorCode() << ")" << std::endl;
         return EXIT_FAILURE;
     }
 

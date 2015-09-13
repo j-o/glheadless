@@ -82,23 +82,23 @@ void Context::setAttribute(int name, int value) {
 }
 
 
-void Context::create() {
-    m_implementation->create(this);
+bool Context::create() {
+    return m_implementation->create(this);
 }
 
 
-void Context::create(const Context& shared) {
-    m_implementation->create(this, &shared);
+bool Context::create(const Context& shared) {
+    return m_implementation->create(this, &shared);
 }
 
 
 void Context::makeCurrent() noexcept {
-    m_implementation->makeCurrent(this);
+    m_implementation->makeCurrent();
 }
 
 
 void Context::doneCurrent() noexcept {
-    m_implementation->doneCurrent(this);
+    m_implementation->doneCurrent();
 }
 
 
@@ -121,6 +121,21 @@ Context& Context::operator=(Context&& other) {
     m_implementation = std::move(other.m_implementation);
 
     return *this;
+}
+
+
+bool Context::valid() const {
+    return m_implementation->valid();
+}
+
+
+const std::error_code& Context::lastErrorCode() const {
+    return m_implementation->lastErrorCode();
+}
+
+
+const std::string& Context::lastErrorMessage() const {
+    return m_implementation->lastErrorMessage();
 }
 
 

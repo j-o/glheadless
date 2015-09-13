@@ -17,11 +17,10 @@ using namespace glheadless;
 void workerThread1(const Context* shared) {
     Context context;
     context.setVersion(4, 5);
+    context.create(*shared);
 
-    try {
-        context.create(*shared);
-    } catch (std::exception& e) {
-        std::cerr << e.what() << std::endl;
+    if (!context.valid()) {
+        std::cerr << context.lastErrorMessage() << ": " << context.lastErrorCode().message() << " (" << context.lastErrorCode() << ")" << std::endl;
         return;
     }
 
@@ -47,11 +46,10 @@ void workerThread2(Context&& context) {
 int main(int /*argc*/, char* /*argv*/[]) {
     Context context;
     context.setVersion(4, 5);
+    context.create();
 
-    try {
-        context.create();
-    } catch (std::exception& e) {
-        std::cerr << e.what() << std::endl;
+    if (!context.valid()) {
+        std::cerr << context.lastErrorMessage() << ": " << context.lastErrorCode().message() << " (" << context.lastErrorCode() << ")" << std::endl;
         return EXIT_FAILURE;
     }
 
@@ -67,10 +65,10 @@ int main(int /*argc*/, char* /*argv*/[]) {
     
     Context worker2Context;
     worker2Context.setVersion(4, 5);
-    try {
-        worker2Context.create(context);
-    } catch (std::exception& e) {
-        std::cerr << e.what() << std::endl;
+    worker2Context.create();
+
+    if (!worker2Context.valid()) {
+        std::cerr << worker2Context.lastErrorMessage() << ": " << worker2Context.lastErrorCode().message() << " (" << worker2Context.lastErrorCode() << ")" << std::endl;
         return EXIT_FAILURE;
     }
 

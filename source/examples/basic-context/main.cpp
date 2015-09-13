@@ -16,11 +16,10 @@ using namespace glheadless;
 int main(int /*argc*/, char* /*argv*/[]) {
     Context context;
     context.setVersion(4, 5);
+    context.create();
 
-    try {
-        context.create();
-    } catch (std::exception& e) {
-        std::cerr << e.what() << std::endl;
+    if (!context.valid()) {
+        std::cerr << context.lastErrorMessage() << ": " << context.lastErrorCode().message() << " (" << context.lastErrorCode() << ")" << std::endl;
         return EXIT_FAILURE;
     }
 

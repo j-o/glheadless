@@ -26,11 +26,9 @@ int main(int /*argc*/, char* /*argv*/[]) {
 
     glfwMakeContextCurrent(window);
 
-    Context context;
-    try {
-        context = Context::currentContext();
-    } catch (std::exception& e) {
-        std::cerr << e.what() << std::endl;
+    Context context = Context::currentContext();
+    if (!context.valid()) {
+        std::cerr << context.lastErrorMessage() << ": " << context.lastErrorCode().message() << " (" << context.lastErrorCode() << ")" << std::endl;
         return EXIT_FAILURE;
     }
 

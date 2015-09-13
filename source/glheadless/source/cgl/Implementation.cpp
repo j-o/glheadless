@@ -104,17 +104,18 @@ std::vector<_CGLPixelFormatAttribute> createPixelFormatAttributeList(const Conte
 
 
 Context Implementation::currentContext() {
+    Context context;
+
     const auto contextHandle = CGLGetCurrentContext();
     if (contextHandle == nullptr) {
-        throw std::system_error(Error::CONTEXT_NOT_CURRENT, "CGLGetCurrentContext returned nullptr");
+        context.implementation()->setError(Error::CONTEXT_NOT_CURRENT, "CGLGetCurrentContext returned nullptr");
     }
 
     const auto pixelFormat = CGLGetPixelFormat(contextHandle);
     if (pixelFormat == nullptr) {
-        throw std::system_error(Error::CONTEXT_NOT_CURRENT, "CGLGetPixelFormat returned nullptr");
+        context.implementation()->setError(Error::CONTEXT_NOT_CURRENT, "CGLGetPixelFormat returned nullptr");
     }
 
-    Context context;
     context.implementation()->setExternal(contextHandle, pixelFormat);
 
     return std::move(context);
@@ -145,34 +146,37 @@ Implementation::~Implementation() {
 }
 
 
-void Implementation::create(Context* context) {
-    setPixelFormat(context);
-    createContext();
+bool Implementation::create(Context* context) {
+    return setPixelFormat(context)
+        && createContext();
 }
 
 
-void Implementation::create(Context* context, const Context* shared) {
-    setPixelFormat(context);
-    createContext(shared->implementation()->m_context);
+bool Implementation::create(Context* context, const Context* shared) {
+    return setPixelFormat(context)
+        && createContext(shared->implementation()->m_context);
 }
 
 
-void Implementation::setPixelFormat(Context *context) {
+bool Implementation::setPixelFormat(Context *context) {
     const auto pixelFormatAttributes = createPixelFormatAttributeList(context);
 
     GLint numVirtualScreens;
     const auto error = CGLChoosePixelFormat(pixelFormatAttributes.data(), &m_pixelFormat, &numVirtualScreens);
     if (error != kCGLNoError) {
-        throw std::system_error(error, "CGLChoosePixelFormat failed");
+        return setError(error, "CGLChoosePixelFormat failed");
     }
+
+    return true;
 }
 
 
-void Implementation::createContext(CGLContextObj shared) {
+bool Implementation::createContext(CGLContextObj shared) {
     const auto error = CGLCreateContext(m_pixelFormat, shared, &m_context);
     if (error != kCGLNoError) {
-        throw std::system_error(error, "CGLCreateContext failed");
+        return setError(error, "CGLCreateContext failed");
     }
+    return true;
 }
 
 
@@ -196,15 +200,39 @@ Implementation& Implementation::operator=(Implementation&& other) {
 }
 
 
-void Implementation::makeCurrent(Context* context) noexcept {
+void Implementation::makeCurrent() noexcept {
     const auto error = CGLSetCurrentContext(m_context);
     assert(error == kCGLNoError);
 }
 
 
-void Implementation::doneCurrent(Context* context) noexcept {
+void Implementation::doneCurrent() noexcept {
     const auto error = CGLSetCurrentContext(nullptr);
     assert(error == kCGLNoError);
+}
+
+
+bool Implementation::valid() const {
+    return !m_lastErrorCode
+        && m_context != nullptr
+        && m_pixelFormat != nullptr;
+}
+
+
+bool Implementation::setError(const std::error_code& code, const std::string& message) {
+    m_lastErrorCode = code;
+    m_lastErrorMessage = message;
+    return !m_lastErrorCode;
+}
+
+
+const std::error_code& Implementation::lastErrorCode() const {
+    return m_lastErrorCode;
+}
+
+
+const std::string& Implementation::lastErrorMessage() const {
+    return m_lastErrorMessage;
 }
 
 

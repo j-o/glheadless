@@ -5,6 +5,7 @@
 #include <memory>
 
 #include <glheadless/PixelFormat.h>
+#include <system_error>
 
 
 namespace glheadless {
@@ -49,11 +50,15 @@ public:
     const std::map<int, int>& attributes() const;
     void setAttribute(int name, int value);
 
-    void create();
-    void create(const Context& shared);
+    bool create();
+    bool create(const Context& shared);
 
     void makeCurrent() noexcept;
     void doneCurrent() noexcept;
+
+    bool valid() const;
+    const std::error_code& lastErrorCode() const;
+    const std::string& lastErrorMessage() const;
 
     Implementation* implementation();
     const Implementation* implementation() const;
