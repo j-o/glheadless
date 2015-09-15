@@ -59,15 +59,5 @@ std::error_code make_error_code(Error error) {
 }
 
 
-void nullErrorCallback(const std::error_code& code, const std::string& message) {
-    // do nothing
-}
-
-
-void throwingErrorCallback(const std::error_code& code, const std::string& message) {
-    throw std::system_error(code, message);
-}
-
-
 }  // namespace glheadless
 

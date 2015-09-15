@@ -9,16 +9,18 @@
 namespace glheadless {
 
 
-AbstractImplementation::AbstractImplementation()
-: m_errorCallback(nullErrorCallback) {
+AbstractImplementation::AbstractImplementation(Context* context)
+: m_context(context) {
 }
 
 
-bool AbstractImplementation::setError(const std::error_code& code, const std::string& message) {
+bool AbstractImplementation::setError(const std::error_code& code, const std::string& message, ExceptionMask exceptionType) {
     m_lastErrorCode = code;
     m_lastErrorMessage = message;
 
-    m_errorCallback(m_lastErrorCode, m_lastErrorMessage);
+    if ((m_context->exceptions() & exceptionType) != ExceptionMask::NONE) {
+        throw std::system_error(m_lastErrorCode, m_lastErrorMessage);
+    }
 
     return !m_lastErrorCode;
 }
@@ -31,11 +33,6 @@ const std::error_code& AbstractImplementation::lastErrorCode() const {
 
 const std::string& AbstractImplementation::lastErrorMessage() const {
     return m_lastErrorMessage;
-}
-
-
-void AbstractImplementation::setErrorCallback(const ErrorCallback& callback) {
-    m_errorCallback = callback;
 }
 
 

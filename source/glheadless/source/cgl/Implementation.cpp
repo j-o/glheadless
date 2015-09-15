@@ -108,12 +108,12 @@ Context Implementation::currentContext() {
 
     const auto contextHandle = CGLGetCurrentContext();
     if (contextHandle == nullptr) {
-        context.implementation()->setError(Error::CONTEXT_NOT_CURRENT, "CGLGetCurrentContext returned nullptr");
+        context.implementation()->setError(Error::CONTEXT_NOT_CURRENT, "CGLGetCurrentContext returned nullptr", ExceptionMask::CREATE);
     }
 
     const auto pixelFormat = CGLGetPixelFormat(contextHandle);
     if (pixelFormat == nullptr) {
-        context.implementation()->setError(Error::CONTEXT_NOT_CURRENT, "CGLGetPixelFormat returned nullptr");
+        context.implementation()->setError(Error::CONTEXT_NOT_CURRENT, "CGLGetPixelFormat returned nullptr", ExceptionMask::CREATE);
     }
 
     context.implementation()->setExternal(contextHandle, pixelFormat);
@@ -122,49 +122,55 @@ Context Implementation::currentContext() {
 }
 
 
-Implementation::Implementation()
-: m_context(nullptr)
-, m_pixelFormat(nullptr)
+Implementation::Implementation(Context* context)
+: AbstractImplementation(context)
+, m_contextHandle(nullptr)
+, m_pixelFormatHandle(nullptr)
 , m_owning(true) {
 }
 
 
-Implementation::Implementation(Implementation&& other) {
-    *this = std::move(other);
+Implementation::Implementation(Implementation&& other)
+: AbstractImplementation(std::forward<AbstractImplementation>(other))
+, m_contextHandle(other.m_contextHandle)
+, m_pixelFormatHandle(other.m_pixelFormatHandle)
+, m_owning(other.m_owning) {
+    other.m_contextHandle = nullptr;
+    other.m_pixelFormatHandle = nullptr;
 }
 
 
 Implementation::~Implementation() {
     if (m_owning) {
-        if (m_context != nullptr) {
-            CGLReleaseContext(m_context);
+        if (m_contextHandle != nullptr) {
+            CGLReleaseContext(m_contextHandle);
         }
-        if (m_pixelFormat != nullptr) {
-            CGLReleasePixelFormat(m_pixelFormat);
+        if (m_pixelFormatHandle != nullptr) {
+            CGLReleasePixelFormat(m_pixelFormatHandle);
         }
     }
 }
 
 
-bool Implementation::create(Context* context) {
-    return setPixelFormat(context)
+bool Implementation::create() {
+    return setPixelFormat()
         && createContext();
 }
 
 
-bool Implementation::create(Context* context, const Context* shared) {
-    return setPixelFormat(context)
-        && createContext(shared->implementation()->m_context);
+bool Implementation::create(const Context* shared) {
+    return setPixelFormat()
+        && createContext(shared->implementation()->m_contextHandle);
 }
 
 
-bool Implementation::setPixelFormat(Context *context) {
-    const auto pixelFormatAttributes = createPixelFormatAttributeList(context);
+bool Implementation::setPixelFormat() {
+    const auto pixelFormatAttributes = createPixelFormatAttributeList(m_context);
 
     GLint numVirtualScreens;
-    const auto error = CGLChoosePixelFormat(pixelFormatAttributes.data(), &m_pixelFormat, &numVirtualScreens);
+    const auto error = CGLChoosePixelFormat(pixelFormatAttributes.data(), &m_pixelFormatHandle, &numVirtualScreens);
     if (error != kCGLNoError) {
-        return setError(error, "CGLChoosePixelFormat failed");
+        return setError(error, "CGLChoosePixelFormat failed", ExceptionMask::CREATE);
     }
 
     return true;
@@ -172,17 +178,17 @@ bool Implementation::setPixelFormat(Context *context) {
 
 
 bool Implementation::createContext(CGLContextObj shared) {
-    const auto error = CGLCreateContext(m_pixelFormat, shared, &m_context);
+    const auto error = CGLCreateContext(m_pixelFormatHandle, shared, &m_contextHandle);
     if (error != kCGLNoError) {
-        return setError(error, "CGLCreateContext failed");
+        return setError(error, "CGLCreateContext failed", ExceptionMask::CREATE);
     }
     return true;
 }
 
 
 void Implementation::setExternal(CGLContextObj context, CGLPixelFormatObj pixelFormat) {
-    m_context = context;
-    m_pixelFormat = pixelFormat;
+    m_contextHandle = context;
+    m_pixelFormatHandle = pixelFormat;
     m_owning = false;
 }
 
@@ -190,11 +196,11 @@ void Implementation::setExternal(CGLContextObj context, CGLPixelFormatObj pixelF
 Implementation& Implementation::operator=(Implementation&& other) {
     AbstractImplementation::operator=(std::forward<Implementation>(other));
 
-    m_context = other.m_context;
-    other.m_pixelFormat = nullptr;
+    m_contextHandle = other.m_contextHandle;
+    other.m_pixelFormatHandle = nullptr;
 
-    m_pixelFormat = other.m_pixelFormat;
-    other.m_pixelFormat = nullptr;
+    m_pixelFormatHandle = other.m_pixelFormatHandle;
+    other.m_pixelFormatHandle = nullptr;
 
     m_owning = other.m_owning;
 
@@ -202,22 +208,28 @@ Implementation& Implementation::operator=(Implementation&& other) {
 }
 
 
-void Implementation::makeCurrent() noexcept {
-    const auto error = CGLSetCurrentContext(m_context);
-    assert(error == kCGLNoError);
+bool Implementation::makeCurrent() noexcept {
+    const auto error = CGLSetCurrentContext(m_contextHandle);
+    if (error != kCGLNoError) {
+        return setError(error, "CGLSetCurrentContext failed", ExceptionMask::CHANGE_CURRENT);
+    }
+    return true;
 }
 
 
-void Implementation::doneCurrent() noexcept {
+bool Implementation::doneCurrent() noexcept {
     const auto error = CGLSetCurrentContext(nullptr);
-    assert(error == kCGLNoError);
+    if (error != kCGLNoError) {
+        return setError(error, "CGLSetCurrentContext failed", ExceptionMask::CHANGE_CURRENT);
+    }
+    return true;
 }
 
 
 bool Implementation::valid() const {
     return !lastErrorCode()
-        && m_context != nullptr
-        && m_pixelFormat != nullptr;
+        && m_contextHandle != nullptr
+        && m_pixelFormatHandle != nullptr;
 }
 
 

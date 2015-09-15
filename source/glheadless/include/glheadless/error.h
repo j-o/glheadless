@@ -30,12 +30,6 @@ std::error_condition make_error_condition(Error error);
 std::error_code make_error_code(Error error);
 
 
-using ErrorCallback = std::function<void(const std::error_code&, const std::string&)>;
-
-void nullErrorCallback(const std::error_code& code, const std::string& message);
-void throwingErrorCallback(const std::error_code& code, const std::string& message);
-
-
 }  // namespace glheadless
 
 

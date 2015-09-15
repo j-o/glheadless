@@ -19,7 +19,8 @@ Context::Context()
 : m_version(3, 2)
 , m_profile(ContextProfile::CORE)
 , m_debugContext(false)
-, m_implementation(std::make_unique<Implementation>()) {
+, m_exceptions(ExceptionMask::NONE)
+, m_implementation(std::make_unique<Implementation>(this)) {
 }
 
 
@@ -83,12 +84,12 @@ void Context::setAttribute(int name, int value) {
 
 
 bool Context::create() {
-    return m_implementation->create(this);
+    return m_implementation->create();
 }
 
 
 bool Context::create(const Context& shared) {
-    return m_implementation->create(this, &shared);
+    return m_implementation->create(&shared);
 }
 
 
@@ -139,8 +140,12 @@ const std::string& Context::lastErrorMessage() const {
 }
 
 
-void Context::setErrorCallback(const ErrorCallback& callback) {
-    m_implementation->setErrorCallback(callback);
+void Context::setExceptions(ExceptionMask exceptions) {
+    m_exceptions = exceptions;
+}
+
+ExceptionMask Context::exceptions() const {
+    return m_exceptions;
 }
 
 

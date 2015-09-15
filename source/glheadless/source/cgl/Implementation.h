@@ -1,8 +1,8 @@
 #pragma once
 
-#include <OpenGL/CGLTypes.h>
-
 #include "../AbstractImplementation.h"
+
+#include <OpenGL/CGLTypes.h>
 
 
 namespace glheadless {
@@ -17,16 +17,16 @@ public:
 
 
 public:
-    Implementation();
+    Implementation(Context* context);
     Implementation(const Implementation&) = delete;
     Implementation(Implementation&& other);
     ~Implementation();
 
-    bool create(Context* context);
-    bool create(Context* context, const Context* shared);
+    bool create();
+    bool create(const Context* shared);
 
-    void makeCurrent() noexcept;
-    void doneCurrent() noexcept;
+    bool makeCurrent() noexcept;
+    bool doneCurrent() noexcept;
 
     bool valid() const;
 
@@ -35,14 +35,14 @@ public:
 
 
 private:
-    bool setPixelFormat(Context* context);
+    bool setPixelFormat();
     bool createContext(CGLContextObj shared = nullptr);
     void setExternal(CGLContextObj context, CGLPixelFormatObj pixelFormat);
 
 
 private:
-    CGLContextObj m_context;
-    CGLPixelFormatObj m_pixelFormat;
+    CGLContextObj m_contextHandle;
+    CGLPixelFormatObj m_pixelFormatHandle;
     bool m_owning;
 };
 

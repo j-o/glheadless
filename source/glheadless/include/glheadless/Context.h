@@ -21,6 +21,46 @@ enum class ContextProfile : unsigned int {
 };
 
 
+enum class ExceptionMask : unsigned int {
+    NONE           = 0x0,
+    CREATE         = 0x1,
+    CHANGE_CURRENT = 0x2
+};
+
+constexpr ExceptionMask operator&(ExceptionMask x, ExceptionMask y) {
+    return static_cast<ExceptionMask>(
+            static_cast<std::underlying_type<ExceptionMask>::type>(x) &
+            static_cast<std::underlying_type<ExceptionMask>::type>(y));
+}
+
+constexpr ExceptionMask operator|(ExceptionMask x, ExceptionMask y) {
+    return static_cast<ExceptionMask>(
+            static_cast<std::underlying_type<ExceptionMask>::type>(x) |
+            static_cast<std::underlying_type<ExceptionMask>::type>(y));
+}
+
+constexpr ExceptionMask operator^(ExceptionMask x, ExceptionMask y) {
+    return static_cast<ExceptionMask>(
+            static_cast<std::underlying_type<ExceptionMask>::type>(x) ^
+            static_cast<std::underlying_type<ExceptionMask>::type>(y));
+}
+
+constexpr ExceptionMask& operator&=(ExceptionMask& x, ExceptionMask y) {
+    x = x & y;
+    return x;
+}
+
+constexpr ExceptionMask& operator|=(ExceptionMask& x, ExceptionMask y) {
+    x = x | y;
+    return x;
+}
+
+constexpr ExceptionMask& operator^=(ExceptionMask& x, ExceptionMask y) {
+    x = x ^ y;
+    return x;
+}
+
+
 class GLHEADLESS_API Context {
 public:
     using Version = std::pair<int, int>;
@@ -60,7 +100,9 @@ public:
     bool valid() const;
     const std::error_code& lastErrorCode() const;
     const std::string& lastErrorMessage() const;
-    void setErrorCallback(const ErrorCallback& callback);
+
+    void setExceptions(ExceptionMask exceptions);
+    ExceptionMask exceptions() const;
 
     Implementation* implementation();
     const Implementation* implementation() const;
@@ -75,6 +117,7 @@ private:
     ContextProfile m_profile;
     bool m_debugContext;
     std::map<int, int> m_attributes;
+    ExceptionMask m_exceptions;
 
     std::unique_ptr<Implementation> m_implementation;
 };
