@@ -14,11 +14,11 @@ AbstractImplementation::AbstractImplementation(Context* context)
 }
 
 
-bool AbstractImplementation::setError(const std::error_code& code, const std::string& message, ExceptionMask exceptionType) {
+bool AbstractImplementation::setError(const std::error_code& code, const std::string& message, ExceptionTrigger exceptionTrigger) {
     m_lastErrorCode = code;
     m_lastErrorMessage = message;
 
-    if ((m_context->exceptions() & exceptionType) != ExceptionMask::NONE) {
+    if ((m_context->exceptionTriggers() & exceptionTrigger) != ExceptionTrigger::NONE) {
         throw std::system_error(m_lastErrorCode, m_lastErrorMessage);
     }
 

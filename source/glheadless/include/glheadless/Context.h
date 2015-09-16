@@ -7,6 +7,7 @@
 
 #include <glheadless/PixelFormat.h>
 #include <glheadless/error.h>
+#include <glheadless/ExceptionTrigger.h>
 
 
 namespace glheadless {
@@ -19,46 +20,6 @@ enum class ContextProfile : unsigned int {
     CORE,
     COMPATIBILITY
 };
-
-
-enum class ExceptionMask : unsigned int {
-    NONE           = 0x0,
-    CREATE         = 0x1,
-    CHANGE_CURRENT = 0x2
-};
-
-constexpr ExceptionMask operator&(ExceptionMask x, ExceptionMask y) {
-    return static_cast<ExceptionMask>(
-            static_cast<std::underlying_type<ExceptionMask>::type>(x) &
-            static_cast<std::underlying_type<ExceptionMask>::type>(y));
-}
-
-constexpr ExceptionMask operator|(ExceptionMask x, ExceptionMask y) {
-    return static_cast<ExceptionMask>(
-            static_cast<std::underlying_type<ExceptionMask>::type>(x) |
-            static_cast<std::underlying_type<ExceptionMask>::type>(y));
-}
-
-constexpr ExceptionMask operator^(ExceptionMask x, ExceptionMask y) {
-    return static_cast<ExceptionMask>(
-            static_cast<std::underlying_type<ExceptionMask>::type>(x) ^
-            static_cast<std::underlying_type<ExceptionMask>::type>(y));
-}
-
-constexpr ExceptionMask& operator&=(ExceptionMask& x, ExceptionMask y) {
-    x = x & y;
-    return x;
-}
-
-constexpr ExceptionMask& operator|=(ExceptionMask& x, ExceptionMask y) {
-    x = x | y;
-    return x;
-}
-
-constexpr ExceptionMask& operator^=(ExceptionMask& x, ExceptionMask y) {
-    x = x ^ y;
-    return x;
-}
 
 
 class GLHEADLESS_API Context {
@@ -101,8 +62,8 @@ public:
     const std::error_code& lastErrorCode() const;
     const std::string& lastErrorMessage() const;
 
-    void setExceptions(ExceptionMask exceptions);
-    ExceptionMask exceptions() const;
+    void setExceptionTriggers(ExceptionTrigger exceptions);
+    ExceptionTrigger exceptionTriggers() const;
 
     Implementation* implementation();
     const Implementation* implementation() const;
@@ -117,7 +78,7 @@ private:
     ContextProfile m_profile;
     bool m_debugContext;
     std::map<int, int> m_attributes;
-    ExceptionMask m_exceptions;
+    ExceptionTrigger m_exceptionTriggers;
 
     std::unique_ptr<Implementation> m_implementation;
 };

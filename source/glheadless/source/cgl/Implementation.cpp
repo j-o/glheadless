@@ -108,12 +108,12 @@ Context Implementation::currentContext() {
 
     const auto contextHandle = CGLGetCurrentContext();
     if (contextHandle == nullptr) {
-        context.implementation()->setError(Error::CONTEXT_NOT_CURRENT, "CGLGetCurrentContext returned nullptr", ExceptionMask::CREATE);
+        context.implementation()->setError(Error::CONTEXT_NOT_CURRENT, "CGLGetCurrentContext returned nullptr", ExceptionTrigger::CREATE);
     }
 
     const auto pixelFormat = CGLGetPixelFormat(contextHandle);
     if (pixelFormat == nullptr) {
-        context.implementation()->setError(Error::CONTEXT_NOT_CURRENT, "CGLGetPixelFormat returned nullptr", ExceptionMask::CREATE);
+        context.implementation()->setError(Error::CONTEXT_NOT_CURRENT, "CGLGetPixelFormat returned nullptr", ExceptionTrigger::CREATE);
     }
 
     context.implementation()->setExternal(contextHandle, pixelFormat);
@@ -170,7 +170,7 @@ bool Implementation::setPixelFormat() {
     GLint numVirtualScreens;
     const auto error = CGLChoosePixelFormat(pixelFormatAttributes.data(), &m_pixelFormatHandle, &numVirtualScreens);
     if (error != kCGLNoError) {
-        return setError(error, "CGLChoosePixelFormat failed", ExceptionMask::CREATE);
+        return setError(error, "CGLChoosePixelFormat failed", ExceptionTrigger::CREATE);
     }
 
     return true;
@@ -180,7 +180,7 @@ bool Implementation::setPixelFormat() {
 bool Implementation::createContext(CGLContextObj shared) {
     const auto error = CGLCreateContext(m_pixelFormatHandle, shared, &m_contextHandle);
     if (error != kCGLNoError) {
-        return setError(error, "CGLCreateContext failed", ExceptionMask::CREATE);
+        return setError(error, "CGLCreateContext failed", ExceptionTrigger::CREATE);
     }
     return true;
 }
@@ -211,7 +211,7 @@ Implementation& Implementation::operator=(Implementation&& other) {
 bool Implementation::makeCurrent() noexcept {
     const auto error = CGLSetCurrentContext(m_contextHandle);
     if (error != kCGLNoError) {
-        return setError(error, "CGLSetCurrentContext failed", ExceptionMask::CHANGE_CURRENT);
+        return setError(error, "CGLSetCurrentContext failed", ExceptionTrigger::CHANGE_CURRENT);
     }
     return true;
 }
@@ -220,7 +220,7 @@ bool Implementation::makeCurrent() noexcept {
 bool Implementation::doneCurrent() noexcept {
     const auto error = CGLSetCurrentContext(nullptr);
     if (error != kCGLNoError) {
-        return setError(error, "CGLSetCurrentContext failed", ExceptionMask::CHANGE_CURRENT);
+        return setError(error, "CGLSetCurrentContext failed", ExceptionTrigger::CHANGE_CURRENT);
     }
     return true;
 }

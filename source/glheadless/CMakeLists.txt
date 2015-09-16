@@ -45,6 +45,8 @@ set(api_includes
     ${include_path}/glheadless_api.h
     ${include_path}/Context.h
     ${include_path}/error.h
+    ${include_path}/ExceptionTrigger.h
+    ${include_path}/ExceptionTrigger.hpp
     ${include_path}/PixelFormat.h
 )
 

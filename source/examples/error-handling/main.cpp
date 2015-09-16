@@ -27,7 +27,7 @@ int main(int /*argc*/, char* /*argv*/[]) {
     //
     // Throw exception on error
     //
-    context.setExceptions(ExceptionMask::CREATE);
+    context.setExceptionTriggers(ExceptionTrigger::CREATE);
 
     try {
         context.create();

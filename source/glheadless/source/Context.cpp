@@ -19,7 +19,7 @@ Context::Context()
 : m_version(3, 2)
 , m_profile(ContextProfile::CORE)
 , m_debugContext(false)
-, m_exceptions(ExceptionMask::NONE)
+, m_exceptionTriggers(ExceptionTrigger::NONE)
 , m_implementation(std::make_unique<Implementation>(this)) {
 }
 
@@ -140,12 +140,12 @@ const std::string& Context::lastErrorMessage() const {
 }
 
 
-void Context::setExceptions(ExceptionMask exceptions) {
-    m_exceptions = exceptions;
+void Context::setExceptionTriggers(ExceptionTrigger exceptions) {
+    m_exceptionTriggers = exceptions;
 }
 
-ExceptionMask Context::exceptions() const {
-    return m_exceptions;
+ExceptionTrigger Context::exceptionTriggers() const {
+    return m_exceptionTriggers;
 }
 
 

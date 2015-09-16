@@ -28,7 +28,7 @@ protected:
     AbstractImplementation(Context* context);
     ~AbstractImplementation() = default;
 
-    bool setError(const std::error_code& code, const std::string& message, ExceptionMask exceptionType);
+    bool setError(const std::error_code& code, const std::string& message, ExceptionTrigger exceptionTrigger);
 
 
 protected:
