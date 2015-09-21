@@ -1,5 +1,11 @@
 #pragma once
 
+/*!
+ * \file glheadless_api.h
+ * \brief Declares API export macros.
+ */
+
+
 #ifdef _MSC_VER
 #   define GLHEADLESS_API_EXPORT_DECLARATION __declspec(dllexport)
 #   define GLHEADLESS_API_IMPORT_DECLARATION __declspec(dllimport)
@@ -20,11 +26,3 @@
 #else
 #   define GLHEADLESS_API
 #endif
-
-#ifdef N_DEBUG
-#   define IF_DEBUG(statement)
-#   define IF_NDEBUG(statement) statement
-#else
-#   define IF_DEBUG(statement) statement
-#   define IF_NDEBUG(statement)
-#endif // N_DEBUG

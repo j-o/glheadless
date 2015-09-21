@@ -7,9 +7,9 @@ cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
 
 set(META_PROJECT_NAME        "glheadless")
 set(META_PROJECT_DESCRIPTION "Headless OpenGL Context Creation")
-set(META_VERSION_MAJOR       "1")
+set(META_VERSION_MAJOR       "0")
 set(META_VERSION_MINOR       "0")
-set(META_VERSION_PATCH       "0")
+set(META_VERSION_PATCH       "1")
 set(META_VERSION             "${META_VERSION_MAJOR}.${META_VERSION_MINOR}.${META_VERSION_PATCH}")
 set(META_AUTHOR_ORGANIZATION "hpicgs group")
 set(META_AUTHOR_DOMAIN       "")
@@ -171,5 +171,5 @@ create_revision_file(${CMAKE_BINARY_DIR}/revision ${INSTALL_ROOT})
 #
 
 add_subdirectory(source)
-#add_subdirectory(docs)
+add_subdirectory(docs)
 #add_subdirectory(packages)

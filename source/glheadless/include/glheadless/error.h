@@ -2,11 +2,11 @@
 
 /*!
  * \file error.h
+ * \brief Declares custom error codes for use with std::error_code.
  */
 
 
 #include <system_error>
-#include <functional>
 #include <string>
 
 

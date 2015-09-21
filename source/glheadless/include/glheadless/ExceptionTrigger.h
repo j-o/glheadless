@@ -2,12 +2,10 @@
 
 /*!
  * \file ExceptionTrigger.h
+ * \brief Declares enum ExceptionTrigger.
  */
 
 
-/*!
- * \namespace glheadless
- */
 namespace glheadless {
 
 

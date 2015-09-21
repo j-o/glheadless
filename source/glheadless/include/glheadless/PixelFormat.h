@@ -2,6 +2,7 @@
 
 /*!
  * \file PixelFormat.h
+ * \brief Declares class PixelFormat.
  */
 
 

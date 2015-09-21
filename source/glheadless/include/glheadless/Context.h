@@ -2,6 +2,7 @@
 
 /*!
  * \file Context.h
+ * \brief Declares class Context.
  */
 
 
@@ -14,6 +15,9 @@
 #include <glheadless/ExceptionTrigger.h>
 
 
+/*!
+ * \brief Contains the public interface of the glheadless library.
+ */
 namespace glheadless {
 
 
@@ -38,18 +42,11 @@ enum class ContextProfile : unsigned int {
  * To set up an OpenGL context, instantiate a Context object, configure its pixel format, version, profile and debug
  * context (or use the defaults) and then call create().
  *
- *     Context context;
- *     context.setVersion(4, 5);
- *     context.create();
+ * \snippet basic-context/main.cpp Creating a context
  *
  * Then check the success by calling valid(), any errors can be retrieved using lastErrorCode() and lastErrorMessage().
  *
- *     if (!context.valid()) {
- *         std::string message = context.lastErrorMessage();
- *         std::error_code code = context.lastErrorCode();
- *         std::cerr << message << ": " << code.message() << " (" << code << ")" << std::endl;
- *         return EXIT_FAILURE;
- *     }
+ * \snippet basic-context/main.cpp Checking for errors
  *
  * After successful creation, the new context can be made current using makeCurrent() and doneCurrent(). The context is
  * automatically destroyed at the end of the object lifetime.
