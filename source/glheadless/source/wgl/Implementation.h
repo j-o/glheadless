@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../AbstractImplementation.h"
+
 #include <memory>
 
 #include <Windows.h>
@@ -12,30 +14,32 @@ class Context;
 class Window;
 
 
-class Implementation {
+class Implementation : public AbstractImplementation {
 public:
     static Context currentContext();
 
 
 public:
-    Implementation();
+    Implementation(Context* context);
     Implementation(const Implementation&) = delete;
     Implementation(Implementation&& other);
     ~Implementation();
 
-    void create(Context* context);
-    void create(Context* context, const Context* shared);
+    bool create();
+    bool create(const Context* shared);
 
-    void makeCurrent(Context* context) noexcept;
-    void doneCurrent(Context* context) noexcept;
+    bool makeCurrent() noexcept;
+    bool doneCurrent() noexcept;
+
+    bool valid() const;
 
     Implementation& operator=(const Implementation&) = delete;
     Implementation& operator=(Implementation&& other);
 
 
 private:
-    void setPixelFormat(Context* context);
-    void createContext(Context* context, HGLRC shared = nullptr);
+    void setPixelFormat();
+    void createContext(HGLRC shared = nullptr);
     void setExternal(HWND window, HDC deviceContext, HGLRC context);
 
 

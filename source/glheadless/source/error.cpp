@@ -1,7 +1,6 @@
 #include <glheadless/error.h>
 
 #include <array>
-#include <string>
 
 
 namespace glheadless {
@@ -10,12 +9,13 @@ namespace glheadless {
 namespace {
 
 
-const auto NUM_ERRORS = 2;
+const auto NUM_ERRORS = 3;
 
 
-const auto k_errorMessages = std::array<std::string, NUM_ERRORS + 1>{{
-    /* SUCCESS */               "Success",
-    /* CONTEXT_NOT_CURRENT */   "Context not current"
+const auto k_errorMessages = std::array<std::string, NUM_ERRORS>{{
+    /* SUCCESS */                   "Success",
+    /* CONTEXT_NOT_CURRENT */       "Context not current",
+    /* PIXEL_FORMAT_UNAVAILABLE */  "Pixel format unavailable",
 }};
 
 

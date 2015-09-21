@@ -10,6 +10,7 @@ namespace glheadless {
 enum class Error : int {
     SUCCESS,
     CONTEXT_NOT_CURRENT
+    PIXEL_FORMAT_UNAVAILABLE,
 };
 
 

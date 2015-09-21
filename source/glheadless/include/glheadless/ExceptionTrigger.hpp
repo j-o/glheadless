@@ -32,19 +32,19 @@ constexpr ExceptionTrigger operator~(ExceptionTrigger x) {
 }
 
 
-constexpr ExceptionTrigger& operator&=(ExceptionTrigger& x, ExceptionTrigger y) {
+inline ExceptionTrigger& operator&=(ExceptionTrigger& x, ExceptionTrigger y) {
     x = x & y;
     return x;
 }
 
 
-constexpr ExceptionTrigger& operator|=(ExceptionTrigger& x, ExceptionTrigger y) {
+inline ExceptionTrigger& operator|=(ExceptionTrigger& x, ExceptionTrigger y) {
     x = x | y;
     return x;
 }
 
 
-constexpr ExceptionTrigger& operator^=(ExceptionTrigger& x, ExceptionTrigger y) {
+inline ExceptionTrigger& operator^=(ExceptionTrigger& x, ExceptionTrigger y) {
     x = x ^ y;
     return x;
 }

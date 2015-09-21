@@ -1,4 +1,5 @@
 #include <iostream>
+#include <string>
 
 #include <glheadless/Context.h>
 #include <glheadless/error.h>

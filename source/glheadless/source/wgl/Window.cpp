@@ -5,6 +5,10 @@
 
 #include <Windows.h>
 
+#include <glheadless/ExceptionTrigger.h>
+
+#include "../InternalException.h"
+
 #include "Platform.h"
 
 
@@ -21,7 +25,7 @@ Window::WindowClass::WindowClass()
     //
     auto success = GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, nullptr, &m_instanceHandle);
     if (!success) {
-        throw std::system_error(getLastErrorCode(), "GetModuleHandleEx failed");
+        throw InternalException(getLastErrorCode(), "GetModuleHandleEx failed", ExceptionTrigger::CREATE);
     }
 
 
@@ -44,7 +48,7 @@ Window::WindowClass::WindowClass()
 
     m_id = RegisterClassEx(&windowClass);
     if (m_id == 0) {
-        throw std::system_error(getLastErrorCode(), "RegisterClassEx failed");
+        throw InternalException(getLastErrorCode(), "RegisterClassEx failed", ExceptionTrigger::CREATE);
     }
 }
 
@@ -85,7 +89,7 @@ Window::Window()
     HMODULE instance;
     auto success = GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, nullptr, &instance);
     if (!success) {
-        throw std::system_error(getLastErrorCode(), "GetModuleHandleEx failed");
+        throw InternalException(getLastErrorCode(), "GetModuleHandleEx failed", ExceptionTrigger::CREATE);
     }
 
 
@@ -104,7 +108,7 @@ Window::Window()
                                   instance,
                                   nullptr);
     if (m_windowHandle == nullptr) {
-        throw std::system_error(getLastErrorCode(), "CreateWindow failed");
+        throw InternalException(getLastErrorCode(), "CreateWindow failed", ExceptionTrigger::CREATE);
     }
 
 
@@ -113,7 +117,7 @@ Window::Window()
     //
     m_deviceContextHandle = GetDC(m_windowHandle);
     if (m_deviceContextHandle == nullptr) {
-        throw std::system_error(getLastErrorCode(), "GetDC failed");
+        throw InternalException(getLastErrorCode(), "GetDC failed", ExceptionTrigger::CREATE);
     }
 }
 
