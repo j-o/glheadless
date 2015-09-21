@@ -6,7 +6,6 @@
 #include <system_error>
 
 #include <glheadless/PixelFormat.h>
-#include <glheadless/error.h>
 #include <glheadless/ExceptionTrigger.h>
 
 
@@ -55,9 +54,9 @@ public:
     bool create();
     bool create(const Context& shared);
 
-    void makeCurrent() noexcept;
-    void doneCurrent() noexcept;
+    bool makeCurrent() noexcept;
 
+    bool doneCurrent() noexcept;
     bool valid() const;
     const std::error_code& lastErrorCode() const;
     const std::string& lastErrorMessage() const;

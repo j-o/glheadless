@@ -93,13 +93,13 @@ bool Context::create(const Context& shared) {
 }
 
 
-void Context::makeCurrent() noexcept {
-    m_implementation->makeCurrent();
+bool Context::makeCurrent() noexcept {
+    return m_implementation->makeCurrent();
 }
 
 
-void Context::doneCurrent() noexcept {
-    m_implementation->doneCurrent();
+bool Context::doneCurrent() noexcept {
+    return m_implementation->doneCurrent();
 }
 
 
