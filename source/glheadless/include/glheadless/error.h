@@ -2,6 +2,7 @@
 
 #include <system_error>
 #include <functional>
+#include <string>
 
 
 namespace glheadless {
@@ -9,7 +10,7 @@ namespace glheadless {
 
 enum class Error : int {
     SUCCESS,
-    CONTEXT_NOT_CURRENT
+    CONTEXT_NOT_CURRENT,
     PIXEL_FORMAT_UNAVAILABLE,
 };
 
