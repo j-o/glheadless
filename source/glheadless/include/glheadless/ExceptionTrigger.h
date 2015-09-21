@@ -15,9 +15,9 @@ constexpr ExceptionTrigger operator&(ExceptionTrigger x, ExceptionTrigger y);
 constexpr ExceptionTrigger operator|(ExceptionTrigger x, ExceptionTrigger y);
 constexpr ExceptionTrigger operator^(ExceptionTrigger x, ExceptionTrigger y);
 constexpr ExceptionTrigger operator~(ExceptionTrigger x);
-constexpr ExceptionTrigger& operator&=(ExceptionTrigger& x, ExceptionTrigger y);
-constexpr ExceptionTrigger& operator|=(ExceptionTrigger& x, ExceptionTrigger y);
-constexpr ExceptionTrigger& operator^=(ExceptionTrigger& x, ExceptionTrigger y);
+inline ExceptionTrigger& operator&=(ExceptionTrigger& x, ExceptionTrigger y);
+inline ExceptionTrigger& operator|=(ExceptionTrigger& x, ExceptionTrigger y);
+inline ExceptionTrigger& operator^=(ExceptionTrigger& x, ExceptionTrigger y);
 
 
 }  // namespace glheadless

@@ -6,6 +6,10 @@
 #include <atomic>
 #include <codecvt>
 
+#include <glheadless/ExceptionTrigger.h>
+
+#include "../InternalException.h"
+
 #include "Window.h"
 
 
@@ -111,12 +115,12 @@ Platform::Platform()
 
     const auto pixelFormat = ChoosePixelFormat(window.deviceContext(), &pixelFormatParams);
     if (pixelFormat == 0) {
-        throw std::system_error(getLastErrorCode(), "ChoosePixelFormat failed on temporary context");
+        throw InternalException(getLastErrorCode(), "ChoosePixelFormat failed on temporary context", ExceptionTrigger::CREATE);
     }
 
     auto success = SetPixelFormat(window.deviceContext(), pixelFormat, &pixelFormatParams);
     if (!success) {
-        throw std::system_error(getLastErrorCode(), "SetPixelFormat failed on temporary context");
+        throw InternalException(getLastErrorCode(), "SetPixelFormat failed on temporary context", ExceptionTrigger::CREATE);
     }
 
 
@@ -125,13 +129,13 @@ Platform::Platform()
     //
     const auto dummyContext = wglCreateContext(window.deviceContext());
     if (dummyContext == nullptr) {
-        throw std::system_error(getLastErrorCode(), "wglCreateContext failed on temporary context");
+        throw InternalException(getLastErrorCode(), "wglCreateContext failed on temporary context", ExceptionTrigger::CREATE);
     }
     EnsureAtExit wglDeleteContextAtExit([dummyContext] { wglDeleteContext(dummyContext); });
 
     success = wglMakeCurrent(window.deviceContext(), dummyContext);
     if (!success) {
-        throw std::system_error(getLastErrorCode(), "wglMakeCurrent failed on temporary context");
+        throw InternalException(getLastErrorCode(), "wglMakeCurrent failed on temporary context", ExceptionTrigger::CREATE);
     }
     EnsureAtExit wglDoneCurrentAtExit([] { wglMakeCurrent(nullptr, nullptr); });
 
@@ -141,12 +145,12 @@ Platform::Platform()
     //
     wglChoosePixelFormatARB = reinterpret_cast<PFNWGLCHOOSEPIXELFORMATARBPROC>(wglGetProcAddress("wglChoosePixelFormatARB"));
     if (wglChoosePixelFormatARB == nullptr) {
-        throw std::system_error(getLastErrorCode(), "wglGetProcAddress failed on wglChoosePixelFormatARB");
+        throw InternalException(getLastErrorCode(), "wglGetProcAddress failed on wglChoosePixelFormatARB", ExceptionTrigger::CREATE);
     }
 
     wglCreateContextAttribsARB = reinterpret_cast<PFNWGLCREATECONTEXTATTRIBSARBPROC>(wglGetProcAddress("wglCreateContextAttribsARB"));
     if (wglCreateContextAttribsARB == nullptr) {
-        throw std::system_error(getLastErrorCode(), "wglGetProcAddress failed on wglCreateContextAttribsARB");
+        throw InternalException(getLastErrorCode(), "wglGetProcAddress failed on wglCreateContextAttribsARB", ExceptionTrigger::CREATE);
     }
 }
 

@@ -109,11 +109,13 @@ Context Implementation::currentContext() {
     const auto contextHandle = CGLGetCurrentContext();
     if (contextHandle == nullptr) {
         context.implementation()->setError(Error::CONTEXT_NOT_CURRENT, "CGLGetCurrentContext returned nullptr", ExceptionTrigger::CREATE);
+        return std::move(context);
     }
 
     const auto pixelFormat = CGLGetPixelFormat(contextHandle);
     if (pixelFormat == nullptr) {
         context.implementation()->setError(Error::CONTEXT_NOT_CURRENT, "CGLGetPixelFormat returned nullptr", ExceptionTrigger::CREATE);
+        return std::move(context);
     }
 
     context.implementation()->setExternal(contextHandle, pixelFormat);

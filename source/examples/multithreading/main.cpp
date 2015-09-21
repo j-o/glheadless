@@ -1,5 +1,6 @@
 #include <iostream>
 #include <thread>
+#include <string>
 
 #if defined(_WIN32)
 #include <Windows.h>
@@ -33,13 +34,13 @@ void workerThread1(const Context* shared) {
 }
 
 
-void workerThread2(Context&& context) {
-    context.makeCurrent();
+void workerThread2(Context* context) {
+    context->makeCurrent();
 
     const auto versionString = reinterpret_cast<const char*>(glGetString(GL_VERSION));
     std::cout << "Worker 2: created shared context with version " << versionString << std::endl;
 
-    context.doneCurrent();
+    context->doneCurrent();
 }
 
 
@@ -72,7 +73,7 @@ int main(int /*argc*/, char* /*argv*/[]) {
         return EXIT_FAILURE;
     }
 
-    auto worker2 = std::thread(&workerThread2, std::move(worker2Context));
+    auto worker2 = std::thread(&workerThread2, &worker2Context);
 
     worker1.join();
     worker2.join();

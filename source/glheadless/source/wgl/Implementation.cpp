@@ -5,10 +5,12 @@
 #include <cassert>
 
 #include <glheadless/Context.h>
+#include <glheadless/error.h>
+
+#include "../InternalException.h"
 
 #include "Window.h"
 #include "Platform.h"
-#include <glheadless/error.h>
 
 
 namespace glheadless {
@@ -79,36 +81,45 @@ std::vector<int> createContextAttributeList(const Context& context) {
 
 
 Context Implementation::currentContext() {
+    Context context;
+
     const auto contextHandle = wglGetCurrentContext();
     if (contextHandle == nullptr) {
-        throw std::system_error(make_error_code(Error::CONTEXT_NOT_CURRENT), "wglGetCurrentContext returned nullptr");
+        context.implementation()->setError(make_error_code(Error::CONTEXT_NOT_CURRENT), "wglGetCurrentContext returned nullptr", ExceptionTrigger::CREATE);
+        return std::move(context);
     }
 
     const auto deviceContextHandle = wglGetCurrentDC();
     if (deviceContextHandle == nullptr) {
-        throw std::system_error(make_error_code(Error::CONTEXT_NOT_CURRENT), "wglGetCurrentDC returned nullptr");
+        context.implementation()->setError(make_error_code(Error::CONTEXT_NOT_CURRENT), "wglGetCurrentDC returned nullptr", ExceptionTrigger::CREATE);
+        return std::move(context);
     }
 
     const auto windowHandle = WindowFromDC(deviceContextHandle);
     if (windowHandle == nullptr) {
-        throw std::system_error(make_error_code(Error::CONTEXT_NOT_CURRENT), "WindowFromDC returned nullptr");
+        context.implementation()->setError(make_error_code(Error::CONTEXT_NOT_CURRENT), "WindowFromDC returned nullptr", ExceptionTrigger::CREATE);
+        return std::move(context);
     }
 
-    Context context;
     context.implementation()->setExternal(windowHandle, deviceContextHandle, contextHandle);
 
     return std::move(context);
 }
 
 
-Implementation::Implementation()
-: m_contextHandle(nullptr)
+Implementation::Implementation(Context* context)
+: AbstractImplementation(context)
+, m_contextHandle(nullptr)
 , m_owning(true) {
 }
 
 
-Implementation::Implementation(Implementation&& other) {
-    *this = std::move(other);
+Implementation::Implementation(Implementation&& other)
+: AbstractImplementation(std::forward<AbstractImplementation>(other))
+, m_window(std::move(other.m_window))
+, m_contextHandle(other.m_contextHandle)
+, m_owning(other.m_owning) {
+    other.m_contextHandle = nullptr;
 }
 
 
@@ -127,17 +138,29 @@ Implementation::~Implementation() {
 }
 
 
-void Implementation::create(Context* context) {
-    m_window = std::make_unique<Window>();
-    setPixelFormat(context);
-    createContext(context);
+bool Implementation::create() {
+    try {
+        m_window = std::make_unique<Window>();
+        setPixelFormat();
+        createContext();
+    } catch (InternalException& e) {
+        return setError(e.code(), e.message(), e.trigger());
+    }
+
+    return true;
 }
 
 
-void Implementation::create(Context* context, const Context* shared) {
-    m_window = std::make_unique<Window>();
-    setPixelFormat(context);
-    createContext(context, shared->implementation()->m_contextHandle);
+bool Implementation::create(const Context* shared) {
+    try {
+        m_window = std::make_unique<Window>();
+        setPixelFormat();
+        createContext(shared->implementation()->m_contextHandle);
+    } catch (InternalException& e) {
+        return setError(e.code(), e.message(), e.trigger());
+    }
+
+    return true;
 }
 
 
@@ -160,48 +183,64 @@ Implementation& Implementation::operator=(Implementation&& other) {
 }
 
 
-void Implementation::setPixelFormat(Context* context) {
-    const auto pixelFormatAttributes = createPixelFormatAttributeList(context->pixelFormat());
+void Implementation::setPixelFormat() {
+    const auto pixelFormatAttributes = createPixelFormatAttributeList(m_context->pixelFormat());
 
     int pixelFormatIndex;
     UINT numPixelFormats;
     auto success = Platform::instance()->wglChoosePixelFormatARB(m_window->deviceContext(), pixelFormatAttributes.data(), nullptr, 1, &pixelFormatIndex, &numPixelFormats);
-    if (!success || numPixelFormats == 0) {
-        throw std::system_error(getLastErrorCode(), "wglChoosePixelFormatARB failed");
+    if (!success) {
+        throw InternalException(getLastErrorCode(), "wglChoosePixelFormatARB failed", ExceptionTrigger::CREATE);
+    }
+    if (numPixelFormats == 0) {
+        throw InternalException(Error::PIXEL_FORMAT_UNAVAILABLE, "wglChoosePixelFormatARB returned zero pixel formats", ExceptionTrigger::CREATE);
     }
 
     PIXELFORMATDESCRIPTOR descriptor;
     success = DescribePixelFormat(m_window->deviceContext(), pixelFormatIndex, sizeof(PIXELFORMATDESCRIPTOR), &descriptor);
     if (!success) {
-        throw std::system_error(getLastErrorCode(), "DescribePixelFormat failed");
+        throw InternalException(getLastErrorCode(), "DescribePixelFormat failed", ExceptionTrigger::CREATE);
     }
 
     success = SetPixelFormat(m_window->deviceContext(), pixelFormatIndex, &descriptor);
     if (!success) {
-        throw std::system_error(getLastErrorCode(), "SetPixelFormat failed");
+        throw InternalException(getLastErrorCode(), "SetPixelFormat failed", ExceptionTrigger::CREATE);
     }
 }
 
 
-void Implementation::createContext(Context* context, HGLRC shared) {
-    const auto contextAttributes = createContextAttributeList(*context);
+void Implementation::createContext(HGLRC shared) {
+    const auto contextAttributes = createContextAttributeList(*m_context);
 
     m_contextHandle = Platform::instance()->wglCreateContextAttribsARB(m_window->deviceContext(), shared, contextAttributes.data());
     if (m_contextHandle == nullptr) {
-        throw std::system_error(getLastErrorCode(), "wglCreateContextAttribsARB failed");
+        throw InternalException(getLastErrorCode(), "wglCreateContextAttribsARB failed", ExceptionTrigger::CREATE);
     }
 }
 
 
-void Implementation::makeCurrent(Context* /*context*/) noexcept {
+bool Implementation::makeCurrent() noexcept {
     const auto success = wglMakeCurrent(m_window->deviceContext(), m_contextHandle);
-    assert(success && "wglMakeCurrent");
+    if (!success) {
+        return setError(getLastErrorCode(), "wglMakeCurrent failed", ExceptionTrigger::CHANGE_CURRENT);
+    }
+    return true;
 }
 
 
-void Implementation::doneCurrent(Context* /*context*/) noexcept {
+bool Implementation::doneCurrent() noexcept {
     const auto success = wglMakeCurrent(nullptr, nullptr);
-    assert(success && "wglMakeCurrent(nullptr, nullptr)");
+    if (!success) {
+        return setError(getLastErrorCode(), "wglMakeCurrent with nullptr failed", ExceptionTrigger::CHANGE_CURRENT);
+    }
+    return true;
+}
+
+
+bool Implementation::valid() const {
+    return !lastErrorCode()
+        && m_window != nullptr
+        && m_contextHandle != nullptr;
 }
 
 

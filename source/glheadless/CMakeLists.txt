@@ -55,6 +55,8 @@ set(sources
     ${source_path}/AbstractImplementation.cpp
     ${source_path}/Context.cpp
     ${source_path}/error.cpp
+    ${source_path}/InternalException.h
+    ${source_path}/InternalException.cpp
     ${source_path}/PixelFormat.cpp
 )
 
