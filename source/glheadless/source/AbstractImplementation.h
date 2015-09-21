@@ -1,5 +1,10 @@
 #pragma  once
 
+/*!
+ * \file AbstractImplementation.h
+ */
+
+
 #include <system_error>
 #include <string>
 
@@ -10,6 +15,12 @@
 namespace glheadless {
 
 
+/*!
+ * \brief Non-polymorphic base class for context implemetations.
+ *
+ * Implements handling of errors and ExceptionTriggers. Platform implementations are not required to inherit this class,
+ * in which case they must provide the public methods (lastErrorCode() and lastErrorMessage()) themselves.
+ */
 class AbstractImplementation {
 
 

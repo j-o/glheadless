@@ -1,5 +1,10 @@
 #pragma once
 
+/*!
+ * \file error.h
+ */
+
+
 #include <system_error>
 #include <functional>
 #include <string>
@@ -8,13 +13,19 @@
 namespace glheadless {
 
 
+/*!
+ * \brief Error codes that may originate from the glheadless library itself.
+ */
 enum class Error : int {
-    SUCCESS,
-    CONTEXT_NOT_CURRENT,
-    PIXEL_FORMAT_UNAVAILABLE,
+    SUCCESS,                    //!< No error occured.
+    CONTEXT_NOT_CURRENT,        //!< Context::currentContext() was called without a current context.
+    PIXEL_FORMAT_UNAVAILABLE,   //!< No pixel format is available that satisfies the requested configuration.
 };
 
 
+/*!
+ * \brief glheadless error category for use with std::error_code and std::error_condition.
+ */
 class ErrorCategory : public std::error_category {
 public:
     ErrorCategory();
@@ -25,8 +36,19 @@ public:
 };
 
 
+/*!
+ * \brief Returns the glheadless error category instance.
+ */
 const std::error_category& glheadless_category();
+
+/*!
+ * \return an std::error_condition created form the error code and the glheadless error category.
+ */
 std::error_condition make_error_condition(Error error);
+
+/*!
+ * \return an std::error_code created form the error code and the glheadless error category.
+ */
 std::error_code make_error_code(Error error);
 
 
