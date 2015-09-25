@@ -135,20 +135,33 @@ Window::Window(Window&& other) {
 
 
 Window::~Window() {
-    if (m_owning) {
-        if (m_deviceContextHandle != nullptr) {
-            ReleaseDC(m_windowHandle, m_deviceContextHandle);
-        }
-        if (m_windowHandle != nullptr) {
-            const auto success = DestroyWindow(m_windowHandle);
-            assert(success && "DestroyWindow");
-        }
+    try {
+        destroy();
+    } catch (...) {
+        assert(false && "failed to destroy window");
     }
 }
 
 
 HDC Window::deviceContext() const {
     return m_deviceContextHandle;
+}
+
+
+void Window::destroy() {
+    if (m_owning) {
+        if (m_deviceContextHandle != nullptr) {
+            ReleaseDC(m_windowHandle, m_deviceContextHandle);
+            m_deviceContextHandle = nullptr;
+        }
+        if (m_windowHandle != nullptr) {
+            const auto success = DestroyWindow(m_windowHandle);
+            if (!success) {
+                throw InternalException(getLastErrorCode(), "DestroyWindow failed", ExceptionTrigger::CREATE);
+            }
+            m_windowHandle = nullptr;
+        }
+    }
 }
 
 

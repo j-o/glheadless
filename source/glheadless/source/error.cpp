@@ -9,13 +9,14 @@ namespace glheadless {
 namespace {
 
 
-const auto NUM_ERRORS = 3;
+const auto NUM_ERRORS = 4;
 
 
 const auto k_errorMessages = std::array<std::string, NUM_ERRORS>{{
     /* SUCCESS */                   "Success",
     /* CONTEXT_NOT_CURRENT */       "Context not current",
     /* PIXEL_FORMAT_UNAVAILABLE */  "Pixel format unavailable",
+    /* INVALID_THREAD_ACCESS */     "Invalid thread access"
 }};
 
 

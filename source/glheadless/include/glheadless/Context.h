@@ -10,6 +10,7 @@
 
 #include <memory>
 #include <system_error>
+#include <thread>
 
 #include <glheadless/PixelFormat.h>
 #include <glheadless/ExceptionTrigger.h>
@@ -170,8 +171,10 @@ public:
     /*!
      * \brief Tries to create a shared context according to the settings configured above.
      *
-     * \param shared The context whose resources should be shared with the new context. Use Context:currentContext() to
-     *               get a handle to the current context for sharing.
+     * Make sure `shared` is not current on any thread at the time of calling.
+     * Use Context:currentContext() to get a handle to the current context for sharing.
+     *
+     * \param shared The context whose resources should be shared with the new context.
      *
      * \exception std::system_error if any error occurs and exception ExceptionTrigger::CREATE is enabled.
      *
@@ -180,13 +183,24 @@ public:
     bool create(const Context& shared);
 
     /*!
+     * \brief Destroys the context.
+     *
+     * Must be called from the same thread as create().
+     *
+     * \exception std::system_error if any error occurs and exception ExceptionTrigger::CREATE is enabled.
+     *
+     * \return true on success
+     */
+    bool destroy();
+
+    /*!
      * \brief Makes this context current for the calling thread.
      *
      * \exception std::system_error if any error occurs and exception ExceptionTrigger::CHANGE_CURRENT is enabled.
      *
      * \return true on success.
      */
-    bool makeCurrent() noexcept;
+    bool makeCurrent();
 
     /*!
      * \brief Resets the current context for the calling thread.
@@ -195,7 +209,7 @@ public:
      *
      * \return true on success.
      */
-    bool doneCurrent() noexcept;
+    bool doneCurrent();
 
     /*!
      * \brief Checks if the context has been created successfully and is ready to use.

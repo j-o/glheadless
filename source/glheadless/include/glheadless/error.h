@@ -20,6 +20,7 @@ enum class Error : int {
     SUCCESS,                    //!< No error occured.
     CONTEXT_NOT_CURRENT,        //!< Context::currentContext() was called without a current context.
     PIXEL_FORMAT_UNAVAILABLE,   //!< No pixel format is available that satisfies the requested configuration.
+    INVALID_THREAD_ACCESS       //!< A function was called on an object from a thread that does not own the object
 };
 
 

@@ -18,6 +18,8 @@ public:
 
     HDC deviceContext() const;
 
+    void destroy();
+
     Window& operator=(const Window&) = delete;
     Window& operator=(Window&& other);
 

@@ -1,5 +1,7 @@
 #include <glheadless/Context.h>
 
+#include <cassert>
+
 #ifdef _WIN32
 #include "wgl/Implementation.h"
 #elif defined(__APPLE__)
@@ -93,12 +95,17 @@ bool Context::create(const Context& shared) {
 }
 
 
-bool Context::makeCurrent() noexcept {
+bool Context::destroy() {
+    return m_implementation->destroy();
+}
+
+
+bool Context::makeCurrent() {
     return m_implementation->makeCurrent();
 }
 
 
-bool Context::doneCurrent() noexcept {
+bool Context::doneCurrent() {
     return m_implementation->doneCurrent();
 }
 
@@ -119,6 +126,7 @@ Context& Context::operator=(Context&& other) {
     m_profile = other.m_profile;
     m_debugContext = other.m_debugContext;
     m_attributes = std::move(other.m_attributes);
+
     m_implementation = std::move(other.m_implementation);
 
     return *this;
