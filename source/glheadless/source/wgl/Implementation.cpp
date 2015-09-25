@@ -192,6 +192,8 @@ bool Implementation::destroy() {
         }
     }
 
+    m_owningThread = std::thread::id();
+
     return true;
 }
 
