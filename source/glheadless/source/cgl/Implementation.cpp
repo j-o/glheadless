@@ -63,7 +63,6 @@ std::vector<_CGLPixelFormatAttribute> createPixelFormatAttributeList(const Conte
     attributes[kCGLPFAAccelerated] = GL_TRUE;
     attributes[kCGLPFAClosestPolicy] = GL_TRUE;
     attributes[kCGLPFADoubleBuffer] = pixelFormat.doubleBuffer() ? GL_TRUE : GL_FALSE;
-    attributes[kCGLPFAStereo] = pixelFormat.stereo() ? GL_TRUE : GL_FALSE;
     attributes[kCGLPFAColorSize] = pixelFormat.redBits() + pixelFormat.greenBits() + pixelFormat.blueBits();
     attributes[kCGLPFAAlphaSize] = pixelFormat.alphaBits();
     attributes[kCGLPFADepthSize] = pixelFormat.depthBits();
@@ -143,26 +142,45 @@ Implementation::Implementation(Implementation&& other)
 
 
 Implementation::~Implementation() {
-    if (m_owning) {
-        if (m_contextHandle != nullptr) {
-            CGLReleaseContext(m_contextHandle);
-        }
-        if (m_pixelFormatHandle != nullptr) {
-            CGLReleasePixelFormat(m_pixelFormatHandle);
-        }
-    }
+    destroy();
 }
 
 
 bool Implementation::create() {
+    m_owningThread = std::this_thread::get_id();
+    
     return setPixelFormat()
         && createContext();
 }
 
 
 bool Implementation::create(const Context* shared) {
+    m_owningThread = std::this_thread::get_id();
+    
     return setPixelFormat()
         && createContext(shared->implementation()->m_contextHandle);
+}
+    
+    
+bool Implementation::destroy() {
+    if (m_owningThread != std::thread::id() && m_owningThread != std::this_thread::get_id()) {
+        return setError(Error::INVALID_THREAD_ACCESS, "A context must be destroyed on the same thread that created it", ExceptionTrigger::CREATE);
+    }
+
+    if (m_owning) {
+        if (m_contextHandle != nullptr) {
+            CGLReleaseContext(m_contextHandle);
+            m_contextHandle = nullptr;
+        }
+        if (m_pixelFormatHandle != nullptr) {
+            CGLReleasePixelFormat(m_pixelFormatHandle);
+            m_pixelFormatHandle = nullptr;
+        }
+    }
+
+    m_owningThread = std::thread::id();
+
+    return true;
 }
 
 

@@ -17,13 +17,15 @@ public:
 
 
 public:
-    Implementation(Context* context);
+    explicit Implementation(Context* context);
     Implementation(const Implementation&) = delete;
     Implementation(Implementation&& other);
     ~Implementation();
 
     bool create();
     bool create(const Context* shared);
+    
+    bool destroy();
 
     bool makeCurrent() noexcept;
     bool doneCurrent() noexcept;
@@ -44,6 +46,7 @@ private:
     CGLContextObj m_contextHandle;
     CGLPixelFormatObj m_pixelFormatHandle;
     bool m_owning;
+    std::thread::id m_owningThread;
 };
 
     
