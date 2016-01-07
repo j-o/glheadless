@@ -1,9 +1,7 @@
 
-set(target glfw-interop)
-message(STATUS "Example ${target}")
-
-
-# External libraries
+# 
+# External dependencies
+# 
 
 find_package(GLFW QUIET)
 
@@ -13,63 +11,117 @@ if (NOT GLFW_FOUND)
 endif()
 
 
-# Includes
+# 
+# Executable name and options
+# 
 
-include_directories(
-    ${GLFW_INCLUDE_DIR}
-)
+# Target name
+set(target glfw-interop)
 
-include_directories(
-    BEFORE
-    ${CMAKE_SOURCE_DIR}/source/glheadless/include
-)
-
-
-# Libraries
-
-set(libs
-    ${GLFW_LIBRARY}
-    glheadless
-)
+# Exit here if required dependencies are not met
+message(STATUS "Example ${target}")
 
 
-# Compiler definitions
-
-if (OPTION_BUILD_STATIC)
-    add_definitions("-D${META_PROJECT_NAME_UPPER}_STATIC")
-endif()
-
-
+# 
 # Sources
+# 
 
 set(sources
     main.cpp
 )
 
 
+# 
+# Create executable
+# 
+
 # Build executable
+add_executable(${target}
+    MACOSX_BUNDLE
+    ${sources}
+)
 
-add_executable(${target} ${sources})
+# Create namespaced alias
+add_executable(${META_PROJECT_NAME}::${target} ALIAS ${target})
 
-target_link_libraries(${target} ${libs})
 
-target_compile_options(${target} PRIVATE ${DEFAULT_COMPILE_FLAGS})
+# 
+# Project options
+# 
 
 set_target_properties(${target}
     PROPERTIES
-    LINKER_LANGUAGE              CXX
-    FOLDER                      "${IDE_FOLDER}"
-    COMPILE_DEFINITIONS_DEBUG   "${DEFAULT_COMPILE_DEFS_DEBUG}"
-    COMPILE_DEFINITIONS_RELEASE "${DEFAULT_COMPILE_DEFS_RELEASE}"
-    LINK_FLAGS_DEBUG            "${DEFAULT_LINKER_FLAGS_DEBUG}"
-    LINK_FLAGS_RELEASE          "${DEFAULT_LINKER_FLAGS_RELEASE}"
-    DEBUG_POSTFIX               "d${DEBUG_POSTFIX}")
-
-
-# Deployment
-
-install(TARGETS ${target}
-    RUNTIME DESTINATION ${INSTALL_BIN}
-#   LIBRARY DESTINATION ${INSTALL_SHARED}
-#   ARCHIVE DESTINATION ${INSTALL_LIB}
+    ${DEFAULT_PROJECT_OPTIONS}
+    FOLDER "${IDE_FOLDER}"
 )
+
+
+# 
+# Include directories
+# 
+
+target_include_directories(${target}
+    PRIVATE
+    ${DEFAULT_INCLUDE_DIRECTORIES}
+    ${GLFW_INCLUDE_DIR}
+    ${PROJECT_BINARY_DIR}/source/include
+)
+
+
+# 
+# Libraries
+# 
+
+target_link_libraries(${target}
+    PRIVATE
+    ${DEFAULT_LIBRARIES}
+    ${GLFW_LIBRARY}
+    ${META_PROJECT_NAME}::glheadless
+)
+
+
+# 
+# Compile definitions
+# 
+
+target_compile_definitions(${target}
+    PRIVATE
+    ${DEFAULT_COMPILE_DEFINITIONS}
+)
+
+
+# 
+# Compile options
+# 
+
+target_compile_options(${target}
+    PRIVATE
+    ${DEFAULT_COMPILE_OPTIONS}
+)
+
+
+# 
+# Linker options
+# 
+
+target_link_libraries(${target}
+    PRIVATE
+    ${DEFAULT_LINKER_OPTIONS}
+)
+
+
+# 
+# Deployment
+# 
+
+# Executable
+install(TARGETS ${target}
+    RUNTIME DESTINATION ${INSTALL_BIN} COMPONENT examples
+    BUNDLE  DESTINATION ${INSTALL_BIN} COMPONENT examples
+)
+
+if (OPTION_SELF_CONTAINED)
+    install(FILES ${GLFW_BINARY}
+        DESTINATION ${INSTALL_BIN} COMPONENT examples
+    )
+endif()
