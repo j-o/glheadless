@@ -19,7 +19,6 @@ using namespace glheadless;
 
 void workerThread1(const Context* shared) {
     Context context;
-    context.setVersion(4, 5);
     context.create(*shared);
 
     if (!context.valid()) {
@@ -48,7 +47,6 @@ void workerThread2(Context* context) {
 
 int main(int /*argc*/, char* /*argv*/[]) {
     Context context;
-    context.setVersion(4, 5);
     context.create();
 
     if (!context.valid()) {
@@ -67,7 +65,6 @@ int main(int /*argc*/, char* /*argv*/[]) {
     auto worker1 = std::thread(&workerThread1, &context);
     
     Context worker2Context;
-    worker2Context.setVersion(4, 5);
     worker2Context.create();
 
     if (!worker2Context.valid()) {

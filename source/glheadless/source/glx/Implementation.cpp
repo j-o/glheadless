@@ -138,13 +138,7 @@ Context Implementation::currentContext() {
         return context;
     }
 
-    const auto display = glXGetCurrentDisplay();
-    if (display == nullptr) {
-        context.implementation()->setError(Error::INVALID_CONTEXT, "glXGetCurrentDisplay returned nullptr", ExceptionTrigger::CREATE);
-        return context;
-    }
-
-    context.implementation()->setExternal(display, drawable, contextHandle);
+    context.implementation()->setExternal(drawable, contextHandle);
 
     return std::move(context);
 }
@@ -152,7 +146,6 @@ Context Implementation::currentContext() {
 
 Implementation::Implementation(Context* context)
 : AbstractImplementation(context)
-, m_display(nullptr)
 , m_contextHandle(nullptr)
 , m_drawable(0)
 , m_pBuffer(0)
@@ -162,13 +155,11 @@ Implementation::Implementation(Context* context)
 
 Implementation::Implementation(Implementation&& other)
 : AbstractImplementation(std::forward<AbstractImplementation>(other))
-, m_display(other.m_display)
 , m_contextHandle(other.m_contextHandle)
 , m_drawable(other.m_drawable)
 , m_pBuffer(other.m_pBuffer)
 , m_owning(other.m_owning)
 , m_owningThread(other.m_owningThread) {
-    other.m_display = nullptr;
     other.m_contextHandle = nullptr;
     other.m_drawable = 0;
     other.m_pBuffer = 0;
@@ -223,28 +214,23 @@ bool Implementation::destroy() {
             if (currentContext == m_contextHandle) {
                 doneCurrent();
             }
-            glXDestroyContext(m_display, m_contextHandle);
+            glXDestroyContext(Platform::instance()->display(), m_contextHandle);
             if (xErrorHandler.errorCode() != Success) {
                 return setError(Error::INVALID_CONTEXT, "glXDestroyContext failed (" + xErrorHandler.errorString() + ")", ExceptionTrigger::CREATE);
             }
         };
 
         if (m_pBuffer != 0) {
-            glXDestroyPbuffer(m_display, m_pBuffer);
+            glXDestroyPbuffer(Platform::instance()->display(), m_pBuffer);
             if (xErrorHandler.errorCode() != Success) {
                 return setError(Error::INVALID_CONTEXT, "glXDestroyPbuffer failed (" + xErrorHandler.errorString() + ")", ExceptionTrigger::CREATE);
             }
-        }
-
-        if (m_display != nullptr) {
-            XCloseDisplay(m_display);
         }
     }
 
     m_contextHandle = nullptr;
     m_pBuffer = 0;
     m_drawable = 0;
-    m_display = nullptr;
 
     m_owningThread = std::thread::id();
     m_owning = true;
@@ -256,7 +242,7 @@ bool Implementation::destroy() {
 bool Implementation::makeCurrent() noexcept {
     XErrorHandler xErrorHandler;
 
-    const auto success = glXMakeContextCurrent(m_display, m_drawable, m_drawable, m_contextHandle);
+    const auto success = glXMakeContextCurrent(Platform::instance()->display(), m_drawable, m_drawable, m_contextHandle);
     if (!success) {
         return setError(Error::INVALID_CONTEXT, "glXMakeContextCurrent failed (" + xErrorHandler.errorString() + ")", ExceptionTrigger::CHANGE_CURRENT);
     }
@@ -267,7 +253,7 @@ bool Implementation::makeCurrent() noexcept {
 bool Implementation::doneCurrent() noexcept {
     XErrorHandler xErrorHandler;
 
-    const auto success = glXMakeContextCurrent(m_display, None, None, nullptr);
+    const auto success = glXMakeContextCurrent(Platform::instance()->display(), None, None, nullptr);
     if (!success) {
         return setError(Error::INVALID_CONTEXT, "glXMakeContextCurrent with nullptr failed (" + xErrorHandler.errorString() + ")", ExceptionTrigger::CHANGE_CURRENT);
     }
@@ -277,20 +263,17 @@ bool Implementation::doneCurrent() noexcept {
 
 bool Implementation::valid() const {
     return !lastErrorCode()
-        && m_display != nullptr
         && m_contextHandle != nullptr;
 }
 
 
 Implementation& Implementation::operator=(Implementation&& other) {
-    m_display = other.m_display;
     m_contextHandle = other.m_contextHandle;
     m_drawable = other.m_drawable;
     m_pBuffer = other.m_pBuffer;
     m_owning = other.m_owning;
     m_owningThread = other.m_owningThread;
 
-    other.m_display = nullptr;
     other.m_contextHandle = nullptr;
     other.m_drawable = 0;
     other.m_pBuffer = 0;
@@ -300,26 +283,18 @@ Implementation& Implementation::operator=(Implementation&& other) {
 
 
 void Implementation::createContext(GLXContext shared) {
-    //
-    // Set custom error handler
-    //
+    // set custom error handler
     XErrorHandler xErrorHandler;
 
-
-    //
-    // Open display
-    //
-    m_display = XOpenDisplay(nullptr);
-    if (m_display == nullptr) {
-        throw InternalException(Error::INVALID_CONFIGURATION, "XOpenDisplay returned nullptr", ExceptionTrigger::CREATE);
-    }
+    // get display
+    Display* display = Platform::instance()->display();
 
 
     //
     // Select framebuffer configuration
     //
     int fbCount;
-    GLXFBConfig* fbConfig = glXChooseFBConfig(m_display, DefaultScreen(m_display), { None }, &fbCount);
+    GLXFBConfig* fbConfig = glXChooseFBConfig(display, DefaultScreen(display), { None }, &fbCount);
     if (fbConfig == nullptr) {
         throw InternalException(Error::INVALID_CONFIGURATION, "glXChooseFBConfig returned nullptr", ExceptionTrigger::CREATE);
     }
@@ -330,8 +305,8 @@ void Implementation::createContext(GLXContext shared) {
     // Create context
     //
     const auto contextAttributes = createContextAttributeList(*m_context);
-    m_contextHandle = Platform::instance()->glXCreateContextAttribsARB(m_display, fbConfig[0], shared, True, contextAttributes.data());
-    XSync(m_display, false);
+    m_contextHandle = Platform::instance()->glXCreateContextAttribsARB(display, fbConfig[0], shared, True, contextAttributes.data());
+    XSync(display, false);
     if (m_contextHandle == nullptr || xErrorHandler.errorCode() != Success) {
         throw InternalException(Error::INVALID_CONFIGURATION, "glXCreateContextAttribsARB returned nullptr (" + xErrorHandler.errorString() + ")", ExceptionTrigger::CREATE);
     }
@@ -341,21 +316,20 @@ void Implementation::createContext(GLXContext shared) {
         GLX_PBUFFER_HEIGHT, 1,
         None
     };
-    m_pBuffer = glXCreatePbuffer(m_display, fbConfig[0], pBufferAttributes);
-    XSync(m_display, false);
+    m_pBuffer = glXCreatePbuffer(display, fbConfig[0], pBufferAttributes);
+    XSync(display, false);
 
     // check if pbuffer is supported
-    const auto success = glXMakeContextCurrent(m_display, m_pBuffer, m_pBuffer, m_contextHandle);
+    const auto success = glXMakeContextCurrent(display, m_pBuffer, m_pBuffer, m_contextHandle);
     if (success) {
-        glXMakeContextCurrent(m_display, None, None, nullptr);
+        glXMakeContextCurrent(display, None, None, nullptr);
         m_drawable = m_pBuffer;
     } else {
-        m_drawable = DefaultRootWindow(m_display);
+        m_drawable = DefaultRootWindow(display);
     }
 }
 
-void Implementation::setExternal(Display* display, GLXDrawable drawable, GLXContext contextHandle) {
-    m_display = display;
+void Implementation::setExternal(GLXDrawable drawable, GLXContext contextHandle) {
     m_drawable = drawable;
     m_contextHandle = contextHandle;
     m_owning = false;

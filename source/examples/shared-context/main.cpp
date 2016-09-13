@@ -18,7 +18,6 @@ using namespace glheadless;
 
 int main(int /*argc*/, char* /*argv*/[]) {
     Context context;
-    context.setVersion(4, 5);
     context.create();
 
     if (!context.valid()) {
@@ -35,7 +34,6 @@ int main(int /*argc*/, char* /*argv*/[]) {
 
 
     Context shared;
-    shared.setVersion(4, 5);
     shared.create(context);
 
     if (!shared.valid()) {

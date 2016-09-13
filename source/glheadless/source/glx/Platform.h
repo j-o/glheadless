@@ -18,9 +18,17 @@ public:
     PFNGLXCREATECONTEXTATTRIBSARBPROC glXCreateContextAttribsARB;
 
 
+public:
+    Display* display() const;
+
+
 private:
     Platform();
     ~Platform();
+
+
+private:
+    Display* m_display;
 };
 
 

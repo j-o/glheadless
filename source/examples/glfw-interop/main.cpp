@@ -7,6 +7,8 @@
 #include <gl/GL.h>
 #elif defined(__APPLE__)
 #include <OpenGL/gl.h>
+#elif defined(__linux__)
+#include <GL/gl.h>
 #endif
 
 #define GLFW_INCLUDE_NONE
@@ -20,7 +22,6 @@ using namespace glheadless;
 
 void workerThread1(const Context* shared) {
     Context context;
-    context.setVersion(4, 5);
     context.create(*shared);
 
     if (!context.valid()) {

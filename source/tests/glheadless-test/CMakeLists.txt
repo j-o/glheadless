@@ -15,6 +15,8 @@ message(STATUS "Test ${target}")
 set(sources
     main.cpp
     basic-context_test.cpp
+    shared-context_test.cpp
+    multithread_test.cpp
 )
 
 

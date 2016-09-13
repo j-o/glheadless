@@ -39,6 +39,7 @@ protected:
     AbstractImplementation(Context* context);
     virtual ~AbstractImplementation() = default;
 
+    bool setError(Error code, const std::string& message, ExceptionTrigger exceptionTrigger);
     bool setError(const std::error_code& code, const std::string& message, ExceptionTrigger exceptionTrigger);
 
 

@@ -14,6 +14,11 @@ AbstractImplementation::AbstractImplementation(Context* context)
 }
 
 
+bool AbstractImplementation::setError(Error code, const std::string &message, ExceptionTrigger exceptionTrigger) {
+    return setError(make_error_code(code), message, exceptionTrigger);
+}
+
+
 bool AbstractImplementation::setError(const std::error_code& code, const std::string& message, ExceptionTrigger exceptionTrigger) {
     m_lastErrorCode = code;
     m_lastErrorMessage = message;

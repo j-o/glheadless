@@ -38,11 +38,10 @@ public:
 
 private:
     void createContext(GLXContext shared = nullptr);
-    void setExternal(Display* display, GLXDrawable drawable, GLXContext contextHandle);
+    void setExternal(GLXDrawable drawable, GLXContext contextHandle);
 
 
 private:
-    Display* m_display;
     GLXContext m_contextHandle;
     GLXDrawable m_drawable;
     GLXPbuffer m_pBuffer;
