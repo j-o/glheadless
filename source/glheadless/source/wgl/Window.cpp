@@ -6,6 +6,7 @@
 #include <Windows.h>
 
 #include <glheadless/ExceptionTrigger.h>
+#include <glheadless/error.h>
 
 #include "../InternalException.h"
 
@@ -19,13 +20,13 @@ std::weak_ptr<Window::WindowClass> Window::s_windowClass;
 
 
 Window::WindowClass::WindowClass()
-    : m_id(0) {
+: m_id(0) {
     //
     // Get module handle
     //
     auto success = GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, nullptr, &m_instanceHandle);
     if (!success) {
-        throw InternalException(getLastErrorCode(), "GetModuleHandleEx failed", ExceptionTrigger::CREATE);
+        throw InternalException(Error::INVALID_CONFIGURATION, "GetModuleHandleEx failed", ExceptionTrigger::CREATE);
     }
 
 
@@ -48,7 +49,7 @@ Window::WindowClass::WindowClass()
 
     m_id = RegisterClassEx(&windowClass);
     if (m_id == 0) {
-        throw InternalException(getLastErrorCode(), "RegisterClassEx failed", ExceptionTrigger::CREATE);
+        throw InternalException(Error::INVALID_CONFIGURATION, "RegisterClassEx failed", ExceptionTrigger::CREATE);
     }
 }
 
@@ -89,7 +90,7 @@ Window::Window()
     HMODULE instance;
     auto success = GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, nullptr, &instance);
     if (!success) {
-        throw InternalException(getLastErrorCode(), "GetModuleHandleEx failed", ExceptionTrigger::CREATE);
+        throw InternalException(Error::INVALID_CONFIGURATION, "GetModuleHandleEx failed", ExceptionTrigger::CREATE);
     }
 
 
@@ -108,7 +109,7 @@ Window::Window()
                                   instance,
                                   nullptr);
     if (m_windowHandle == nullptr) {
-        throw InternalException(getLastErrorCode(), "CreateWindow failed", ExceptionTrigger::CREATE);
+        throw InternalException(Error::INVALID_CONFIGURATION, "CreateWindow failed", ExceptionTrigger::CREATE);
     }
 
 
@@ -117,7 +118,7 @@ Window::Window()
     //
     m_deviceContextHandle = GetDC(m_windowHandle);
     if (m_deviceContextHandle == nullptr) {
-        throw InternalException(getLastErrorCode(), "GetDC failed", ExceptionTrigger::CREATE);
+        throw InternalException(Error::INVALID_CONFIGURATION, "GetDC failed", ExceptionTrigger::CREATE);
     }
 }
 
@@ -157,7 +158,7 @@ void Window::destroy() {
         if (m_windowHandle != nullptr) {
             const auto success = DestroyWindow(m_windowHandle);
             if (!success) {
-                throw InternalException(getLastErrorCode(), "DestroyWindow failed", ExceptionTrigger::CREATE);
+                throw InternalException(Error::INVALID_CONTEXT, "DestroyWindow failed", ExceptionTrigger::CREATE);
             }
             m_windowHandle = nullptr;
         }

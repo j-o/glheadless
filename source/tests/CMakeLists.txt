@@ -63,4 +63,4 @@ set_target_properties(test PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
 # Tests
 # 
 
-# add_test_without_ctest(fiblib-test)
+add_test_without_ctest(glheadless-test)

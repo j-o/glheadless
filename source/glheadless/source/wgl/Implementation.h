@@ -40,7 +40,7 @@ public:
 
 
 private:
-    void setPixelFormat();
+    void setPixelFormat() const;
     void createContext(HGLRC shared = nullptr);
     void setExternal(HWND window, HDC deviceContext, HGLRC context);
 

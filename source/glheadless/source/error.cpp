@@ -1,6 +1,7 @@
 #include <glheadless/error.h>
 
 #include <array>
+#include <map>
 
 
 namespace glheadless {
@@ -9,15 +10,11 @@ namespace glheadless {
 namespace {
 
 
-const auto NUM_ERRORS = 4;
-
-
-const auto k_errorMessages = std::array<std::string, NUM_ERRORS>{{
-    /* SUCCESS */                   "Success",
-    /* CONTEXT_NOT_CURRENT */       "Context not current",
-    /* PIXEL_FORMAT_UNAVAILABLE */  "Pixel format unavailable",
-    /* INVALID_THREAD_ACCESS */     "Invalid thread access"
-}};
+const auto k_errorMessages = std::map<Error, std::string>{
+    { Error::INVALID_THREAD_ACCESS, "invalid thread access" },
+    { Error::INVALID_CONFIGURATION, "invalid configuration" },
+    { Error::INVALID_CONTEXT, "invalid context" }
+};
 
 
 }  // anonymous namespace
@@ -34,11 +31,12 @@ const char* ErrorCategory::name() const noexcept {
 
 
 std::string ErrorCategory::message(int condition) const {
-    if (condition >= 0 && condition < NUM_ERRORS) {
-        return k_errorMessages[condition];
+    const auto itr = k_errorMessages.find(static_cast<Error>(condition));
+    if (itr != k_errorMessages.end()) {
+        return itr->second;
     }
 
-    return "Unknown error";
+    return "unknown error";
 }
 
 

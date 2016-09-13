@@ -9,11 +9,8 @@ using namespace glheadless;
 
 
 int main(int /*argc*/, char* /*argv*/[]) {
-    PixelFormat pixelFormat;
-    pixelFormat.setAttribute(0xFFFFFFFF, 0xFFFFFFFF);
-
     Context context;
-    context.setPixelFormat(pixelFormat);
+    context.setVersion(123, 42);
 
 
     //
@@ -21,7 +18,7 @@ int main(int /*argc*/, char* /*argv*/[]) {
     //
     context.create();
     if (!context.valid()) {
-        std::cerr << context.lastErrorMessage() << ": " << context.lastErrorCode().message() << " (" << context.lastErrorCode() << ")" << std::endl;
+        std::cerr << context.lastErrorCode().message() << ": " << context.lastErrorMessage() << std::endl;
     }
 
 

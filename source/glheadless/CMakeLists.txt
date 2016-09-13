@@ -35,7 +35,6 @@ set(headers
     ${include_path}/error.h
     ${include_path}/ExceptionTrigger.h
     ${include_path}/ExceptionTrigger.hpp
-    ${include_path}/PixelFormat.h
 )
 
 set(sources
@@ -45,7 +44,6 @@ set(sources
     ${source_path}/error.cpp
     ${source_path}/InternalException.h
     ${source_path}/InternalException.cpp
-    ${source_path}/PixelFormat.cpp
 )
 
 if(WIN32)
