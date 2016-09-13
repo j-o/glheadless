@@ -6,7 +6,8 @@
 #include <atomic>
 #include <codecvt>
 
-#include <glheadless/ExceptionTrigger.h>
+#include <glheadless/ExceptionTrigger.h> 
+#include <glheadless/error.h>
 
 #include "../InternalException.h"
 
@@ -48,37 +49,6 @@ std::mutex g_platformInstanceMutex;
 }  // unnamed namespace
 
 
-std::error_code getLastErrorCode() {
-    return std::error_code(GetLastError(), std::system_category());
-}
-
-
-std::string getLastErrorMessage() {
-    LPTSTR lpMsgBuf;
-    const auto error = GetLastError();
-
-    FormatMessage(
-        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-        nullptr,
-        error,
-        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-        reinterpret_cast<LPTSTR>(&lpMsgBuf),
-        0,
-        nullptr);
-
-#ifdef UNICODE
-    std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
-    const auto message = converter.to_bytes(lpMsgBuf);
-#else
-    const auto message = std::string(lpMsgBuf);
-#endif
-
-    LocalFree(lpMsgBuf);
-
-    return message;
-}
-
-
 Platform* Platform::instance() {
     // double-checked locking according to http://preshing.com/20130930/double-checked-locking-is-fixed-in-cpp11/
     auto tmp = g_platformInstance.load(std::memory_order_relaxed);
@@ -115,12 +85,12 @@ Platform::Platform()
 
     const auto pixelFormat = ChoosePixelFormat(window.deviceContext(), &pixelFormatParams);
     if (pixelFormat == 0) {
-        throw InternalException(getLastErrorCode(), "ChoosePixelFormat failed on temporary context", ExceptionTrigger::CREATE);
+        throw InternalException(Error::INVALID_CONFIGURATION, "ChoosePixelFormat failed on temporary context", ExceptionTrigger::CREATE);
     }
 
     auto success = SetPixelFormat(window.deviceContext(), pixelFormat, &pixelFormatParams);
     if (!success) {
-        throw InternalException(getLastErrorCode(), "SetPixelFormat failed on temporary context", ExceptionTrigger::CREATE);
+        throw InternalException(Error::INVALID_CONFIGURATION, "SetPixelFormat failed on temporary context", ExceptionTrigger::CREATE);
     }
 
 
@@ -129,13 +99,13 @@ Platform::Platform()
     //
     const auto dummyContext = wglCreateContext(window.deviceContext());
     if (dummyContext == nullptr) {
-        throw InternalException(getLastErrorCode(), "wglCreateContext failed on temporary context", ExceptionTrigger::CREATE);
+        throw InternalException(Error::INVALID_CONFIGURATION, "wglCreateContext failed on temporary context", ExceptionTrigger::CREATE);
     }
     EnsureAtExit wglDeleteContextAtExit([dummyContext] { wglDeleteContext(dummyContext); });
 
     success = wglMakeCurrent(window.deviceContext(), dummyContext);
     if (!success) {
-        throw InternalException(getLastErrorCode(), "wglMakeCurrent failed on temporary context", ExceptionTrigger::CREATE);
+        throw InternalException(Error::INVALID_CONFIGURATION, "wglMakeCurrent failed on temporary context", ExceptionTrigger::CREATE);
     }
     EnsureAtExit wglDoneCurrentAtExit([] { wglMakeCurrent(nullptr, nullptr); });
 
@@ -145,12 +115,12 @@ Platform::Platform()
     //
     wglChoosePixelFormatARB = reinterpret_cast<PFNWGLCHOOSEPIXELFORMATARBPROC>(wglGetProcAddress("wglChoosePixelFormatARB"));
     if (wglChoosePixelFormatARB == nullptr) {
-        throw InternalException(getLastErrorCode(), "wglGetProcAddress failed on wglChoosePixelFormatARB", ExceptionTrigger::CREATE);
+        throw InternalException(Error::INVALID_CONFIGURATION, "wglGetProcAddress failed on wglChoosePixelFormatARB", ExceptionTrigger::CREATE);
     }
 
     wglCreateContextAttribsARB = reinterpret_cast<PFNWGLCREATECONTEXTATTRIBSARBPROC>(wglGetProcAddress("wglCreateContextAttribsARB"));
     if (wglCreateContextAttribsARB == nullptr) {
-        throw InternalException(getLastErrorCode(), "wglGetProcAddress failed on wglCreateContextAttribsARB", ExceptionTrigger::CREATE);
+        throw InternalException(Error::INVALID_CONFIGURATION, "wglGetProcAddress failed on wglCreateContextAttribsARB", ExceptionTrigger::CREATE);
     }
 }
 

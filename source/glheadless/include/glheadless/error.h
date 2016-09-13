@@ -17,10 +17,9 @@ namespace glheadless {
  * \brief Error codes that may originate from the glheadless library itself.
  */
 enum class Error : int {
-    SUCCESS,                    //!< No error occured.
-    CONTEXT_NOT_CURRENT,        //!< Context::currentContext() was called without a current context.
-    INVALID_THREAD_ACCESS,      //!< A function was called on an object from a thread that does not own the object
-    CONTEXT_CREATION_FAILED     //!< Context could not be created
+    INVALID_THREAD_ACCESS = 1,  //!< A function was called on an object from a thread that does not own the object
+    INVALID_CONTEXT,            //!< A context handle is invalid
+    INVALID_CONFIGURATION       //!< The selected configuration is invalid or unsupported
 };
 
 

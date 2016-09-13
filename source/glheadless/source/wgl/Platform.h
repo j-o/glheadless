@@ -17,10 +17,6 @@ class error_code;
 namespace glheadless {
 
 
-std::error_code getLastErrorCode();
-std::string getLastErrorMessage();
-
-
 class Platform {
 public:
     static Platform* instance();

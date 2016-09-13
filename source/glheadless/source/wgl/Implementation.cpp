@@ -59,19 +59,19 @@ Context Implementation::currentContext() {
 
     const auto contextHandle = wglGetCurrentContext();
     if (contextHandle == nullptr) {
-        context.implementation()->setError(make_error_code(Error::CONTEXT_NOT_CURRENT), "wglGetCurrentContext returned nullptr", ExceptionTrigger::CREATE);
+        context.implementation()->setError(Error::INVALID_CONTEXT, "wglGetCurrentContext returned nullptr", ExceptionTrigger::CREATE);
         return std::move(context);
     }
 
     const auto deviceContextHandle = wglGetCurrentDC();
     if (deviceContextHandle == nullptr) {
-        context.implementation()->setError(make_error_code(Error::CONTEXT_NOT_CURRENT), "wglGetCurrentDC returned nullptr", ExceptionTrigger::CREATE);
+        context.implementation()->setError(Error::INVALID_CONTEXT, "wglGetCurrentDC returned nullptr", ExceptionTrigger::CREATE);
         return std::move(context);
     }
 
     const auto windowHandle = WindowFromDC(deviceContextHandle);
     if (windowHandle == nullptr) {
-        context.implementation()->setError(make_error_code(Error::CONTEXT_NOT_CURRENT), "WindowFromDC returned nullptr", ExceptionTrigger::CREATE);
+        context.implementation()->setError(Error::INVALID_CONTEXT, "WindowFromDC returned nullptr", ExceptionTrigger::CREATE);
         return std::move(context);
     }
 
@@ -149,7 +149,7 @@ bool Implementation::destroy() {
         }
         const auto success = wglDeleteContext(m_contextHandle);
         if (!success) {
-            return setError(getLastErrorCode(), "wglDeleteContext failed", ExceptionTrigger::CREATE);
+            return setError(Error::INVALID_CONTEXT, "wglDeleteContext failed", ExceptionTrigger::CREATE);
         }
     }
     m_contextHandle = nullptr;
@@ -199,21 +199,21 @@ void Implementation::setPixelFormat() const {
     if (!success) {
         const auto error = glGetError();
         const auto errorString = gluErrorString(error);
-        throw InternalException(getLastErrorCode(), "wglChoosePixelFormatARB failed with " + std::string(reinterpret_cast<const char*>(errorString)), ExceptionTrigger::CREATE);
+        throw InternalException(Error::INVALID_CONFIGURATION, "wglChoosePixelFormatARB failed with " + std::string(reinterpret_cast<const char*>(errorString)), ExceptionTrigger::CREATE);
     }
     if (numPixelFormats == 0) {
-        throw InternalException(Error::CONTEXT_CREATION_FAILED, "wglChoosePixelFormatARB returned zero pixel formats", ExceptionTrigger::CREATE);
+        throw InternalException(Error::INVALID_CONFIGURATION, "wglChoosePixelFormatARB returned zero pixel formats", ExceptionTrigger::CREATE);
     }
 
     PIXELFORMATDESCRIPTOR descriptor;
     success = DescribePixelFormat(m_window->deviceContext(), pixelFormatIndex, sizeof(PIXELFORMATDESCRIPTOR), &descriptor);
     if (!success) {
-        throw InternalException(getLastErrorCode(), "DescribePixelFormat failed", ExceptionTrigger::CREATE);
+        throw InternalException(Error::INVALID_CONFIGURATION, "DescribePixelFormat failed", ExceptionTrigger::CREATE);
     }
 
     success = SetPixelFormat(m_window->deviceContext(), pixelFormatIndex, &descriptor);
     if (!success) {
-        throw InternalException(getLastErrorCode(), "SetPixelFormat failed", ExceptionTrigger::CREATE);
+        throw InternalException(Error::INVALID_CONFIGURATION, "SetPixelFormat failed", ExceptionTrigger::CREATE);
     }
 }
 
@@ -225,7 +225,7 @@ void Implementation::createContext(HGLRC shared) {
     if (m_contextHandle == nullptr) {
         const auto error = glGetError();
         const auto errorString = gluErrorString(error);
-        throw InternalException(getLastErrorCode(), "wglCreateContextAttribsARB failed with " + std::string(reinterpret_cast<const char*>(errorString)), ExceptionTrigger::CREATE);
+        throw InternalException(Error::INVALID_CONFIGURATION, "wglCreateContextAttribsARB failed with " + std::string(reinterpret_cast<const char*>(errorString)), ExceptionTrigger::CREATE);
     }
 }
 
@@ -233,7 +233,7 @@ void Implementation::createContext(HGLRC shared) {
 bool Implementation::makeCurrent() noexcept {
     const auto success = wglMakeCurrent(m_window->deviceContext(), m_contextHandle);
     if (!success) {
-        return setError(getLastErrorCode(), "wglMakeCurrent failed", ExceptionTrigger::CHANGE_CURRENT);
+        return setError(Error::INVALID_CONTEXT, "wglMakeCurrent failed", ExceptionTrigger::CHANGE_CURRENT);
     }
     return true;
 }
@@ -242,7 +242,7 @@ bool Implementation::makeCurrent() noexcept {
 bool Implementation::doneCurrent() noexcept {
     const auto success = wglMakeCurrent(nullptr, nullptr);
     if (!success) {
-        return setError(getLastErrorCode(), "wglMakeCurrent with nullptr failed", ExceptionTrigger::CHANGE_CURRENT);
+        return setError(Error::INVALID_CONTEXT, "wglMakeCurrent with nullptr failed", ExceptionTrigger::CHANGE_CURRENT);
     }
     return true;
 }
