@@ -6,6 +6,8 @@
 #include <gl/GL.h>
 #elif defined(__APPLE__)
 #include <OpenGL/gl.h>
+#elif defined(__linux__)
+#include <GL/gl.h>
 #endif
 
 #include <glheadless/Context.h>
@@ -17,7 +19,7 @@ using namespace glheadless;
 int main(int /*argc*/, char* /*argv*/[]) {
     //! [Creating a context]
     Context context;
-    context.setVersion(4, 5);
+    context.setVersion(3, 2);
     context.create();
     //! [Creating a context]
 

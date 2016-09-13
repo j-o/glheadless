@@ -48,7 +48,7 @@ set(sources
     ${source_path}/PixelFormat.cpp
 )
 
-if("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
+if(WIN32)
     set(sources ${sources}
         ${source_path}/wgl/Implementation.h
         ${source_path}/wgl/Implementation.cpp
@@ -57,12 +57,21 @@ if("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
         ${source_path}/wgl/Window.h
         ${source_path}/wgl/Window.cpp
     )
-elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "AppleClang")
+elseif(APPLE)
     set(sources ${sources}
         ${source_path}/cgl/error.h
         ${source_path}/cgl/error.cpp
         ${source_path}/cgl/Implementation.h
         ${source_path}/cgl/Implementation.cpp
+    )
+elseif(UNIX)
+    set(sources ${sources}
+        ${source_path}/glx/error.h
+        ${source_path}/glx/error.cpp
+        ${source_path}/glx/Implementation.h
+        ${source_path}/glx/Implementation.cpp
+        ${source_path}/glx/Platform.h
+        ${source_path}/glx/Platform.cpp
     )
 endif()
 
