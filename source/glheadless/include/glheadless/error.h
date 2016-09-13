@@ -25,22 +25,9 @@ enum class Error : int {
 
 
 /*!
- * \brief glheadless error category for use with std::error_code and std::error_condition.
- */
-class GLHEADLESS_API ErrorCategory : public std::error_category {
-public:
-    ErrorCategory();
-
-    virtual const char* name() const noexcept override;
-
-    virtual std::string message(int condition) const override;
-};
-
-
-/*!
- * \brief Returns the glheadless error category instance.
- */
-GLHEADLESS_API const std::error_category& glheadless_category();
+* \brief Returns the glheadless error category instance.
+*/
+const GLHEADLESS_API std::error_category& glheadless_category();
 
 /*!
  * \return an std::error_condition created form the error code and the glheadless error category.

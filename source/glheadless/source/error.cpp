@@ -17,11 +17,18 @@ const auto k_errorMessages = std::map<Error, std::string>{
 };
 
 
-}  // anonymous namespace
+class ErrorCategory : public std::error_category {
+public:
+    ErrorCategory();
+
+    virtual const char* name() const noexcept override;
+
+    virtual std::string message(int condition) const override;
+};
 
 
 ErrorCategory::ErrorCategory()
-: std::error_category() {
+    : std::error_category() {
 }
 
 
@@ -38,6 +45,9 @@ std::string ErrorCategory::message(int condition) const {
 
     return "unknown error";
 }
+
+
+}  // anonymous namespace
 
 
 const std::error_category& glheadless_category() {
