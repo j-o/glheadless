@@ -1,17 +1,10 @@
 #include "Implementation.h"
 
-#include <X11/X.h>
-#include <X11/Xlib.h>
-#include <GL/gl.h>
-#include <GL/glx.h>
-#include <vector>
 #include <cassert>
-#include <iostream>
+#include <vector>
 
-#include "glxext.h"
 #include "Platform.h"
 #include "../InternalException.h"
-#include "error.h"
 
 
 namespace glheadless {
@@ -62,7 +55,6 @@ private:
 };
 
 
-
 EnsureAtExit::EnsureAtExit(const Function &function)
 : m_function(function) {
 }
@@ -73,12 +65,57 @@ EnsureAtExit::~EnsureAtExit() {
 }
 
 
-auto g_errorCode = GLXError::SUCCESS;
-int errorHandler(Display* display, XErrorEvent* errorEvent) {
-    g_errorCode = static_cast<GLXError>(errorEvent->error_code);
+class XErrorHandler {
+public:
+    XErrorHandler();
+    ~XErrorHandler();
+
+    int errorCode() const;
+    const std::string& errorString() const;
+
+
+private:
+    static XErrorHandler* s_activeHandler;
+    static int errorHandler(Display* display, XErrorEvent* errorEvent);
+
+
+private:
+    int (*m_oldHandler)(Display*, XErrorEvent*);
+    int m_errorCode;
+    std::string m_errorString;
+};
+
+
+XErrorHandler* XErrorHandler::s_activeHandler = nullptr;
+
+
+XErrorHandler::XErrorHandler()
+: m_oldHandler(nullptr)
+, m_errorCode(Success) {
+    s_activeHandler = this;
+    m_oldHandler = XSetErrorHandler(XErrorHandler::errorHandler);
+}
+
+XErrorHandler::~XErrorHandler() {
+    s_activeHandler = nullptr;
+    XSetErrorHandler(m_oldHandler);
+}
+
+int XErrorHandler::errorCode() const {
+    return m_errorCode;
+}
+
+const std::string &XErrorHandler::errorString() const {
+    return m_errorString;
+}
+
+int XErrorHandler::errorHandler(Display* display, XErrorEvent* errorEvent) {
     char buffer[1024];
     XGetErrorText(display, errorEvent->error_code, buffer, 1024);
-    std::cout << buffer << std::endl;
+
+    s_activeHandler->m_errorCode = errorEvent->error_code;
+    s_activeHandler->m_errorString = buffer;
+
     return 0;
 }
 
@@ -91,19 +128,19 @@ Context Implementation::currentContext() {
 
     const auto contextHandle = glXGetCurrentContext();
     if (contextHandle == nullptr) {
-        context.implementation()->setError(make_error_code(Error::CONTEXT_NOT_CURRENT), "glXGetCurrentContext returned nullptr", ExceptionTrigger::CREATE);
+        context.implementation()->setError(Error::INVALID_CONTEXT, "glXGetCurrentContext returned nullptr", ExceptionTrigger::CREATE);
         return context;
     }
 
     const auto drawable = glXGetCurrentDrawable();
     if (drawable == 0) {
-        context.implementation()->setError(make_error_code(Error::CONTEXT_NOT_CURRENT), "glXGetCurrentDrawable returned nullptr", ExceptionTrigger::CREATE);
+        context.implementation()->setError(Error::INVALID_CONTEXT, "glXGetCurrentDrawable returned nullptr", ExceptionTrigger::CREATE);
         return context;
     }
 
     const auto display = glXGetCurrentDisplay();
     if (display == nullptr) {
-        context.implementation()->setError(make_error_code(Error::CONTEXT_NOT_CURRENT), "glXGetCurrentDisplay returned nullptr", ExceptionTrigger::CREATE);
+        context.implementation()->setError(Error::INVALID_CONTEXT, "glXGetCurrentDisplay returned nullptr", ExceptionTrigger::CREATE);
         return context;
     }
 
@@ -179,16 +216,24 @@ bool Implementation::destroy() {
     }
 
     if (m_owning) {
+        XErrorHandler xErrorHandler;
+
         if (m_contextHandle != nullptr) {
             const auto currentContext = glXGetCurrentContext();
             if (currentContext == m_contextHandle) {
                 doneCurrent();
             }
             glXDestroyContext(m_display, m_contextHandle);
+            if (xErrorHandler.errorCode() != Success) {
+                return setError(Error::INVALID_CONTEXT, "glXDestroyContext failed (" + xErrorHandler.errorString() + ")", ExceptionTrigger::CREATE);
+            }
         };
 
         if (m_pBuffer != 0) {
             glXDestroyPbuffer(m_display, m_pBuffer);
+            if (xErrorHandler.errorCode() != Success) {
+                return setError(Error::INVALID_CONTEXT, "glXDestroyPbuffer failed (" + xErrorHandler.errorString() + ")", ExceptionTrigger::CREATE);
+            }
         }
 
         if (m_display != nullptr) {
@@ -209,18 +254,22 @@ bool Implementation::destroy() {
 
 
 bool Implementation::makeCurrent() noexcept {
+    XErrorHandler xErrorHandler;
+
     const auto success = glXMakeContextCurrent(m_display, m_drawable, m_drawable, m_contextHandle);
     if (!success) {
-        return setError(make_error_code(GLXError::BAD_CONTEXT), "glXMakeContextCurrent failed", ExceptionTrigger::CHANGE_CURRENT);
+        return setError(Error::INVALID_CONTEXT, "glXMakeContextCurrent failed (" + xErrorHandler.errorString() + ")", ExceptionTrigger::CHANGE_CURRENT);
     }
     return true;
 }
 
 
 bool Implementation::doneCurrent() noexcept {
+    XErrorHandler xErrorHandler;
+
     const auto success = glXMakeContextCurrent(m_display, None, None, nullptr);
     if (!success) {
-        return setError(make_error_code(GLXError::BAD_CONTEXT), "glXMakeContextCurrent with nullptr failed", ExceptionTrigger::CHANGE_CURRENT);
+        return setError(Error::INVALID_CONTEXT, "glXMakeContextCurrent with nullptr failed (" + xErrorHandler.errorString() + ")", ExceptionTrigger::CHANGE_CURRENT);
     }
     return true;
 }
@@ -254,10 +303,7 @@ void Implementation::createContext(GLXContext shared) {
     //
     // Set custom error handler
     //
-    const auto oldErrorHandler = XSetErrorHandler(errorHandler);
-    EnsureAtExit restoreErrorHandle([oldErrorHandler] {
-        XSetErrorHandler(oldErrorHandler);
-    });
+    XErrorHandler xErrorHandler;
 
 
     //
@@ -265,7 +311,7 @@ void Implementation::createContext(GLXContext shared) {
     //
     m_display = XOpenDisplay(nullptr);
     if (m_display == nullptr) {
-        throw InternalException(make_error_code(GLXError::BAD_DISPLAY), "Failed to open display", ExceptionTrigger::CREATE);
+        throw InternalException(Error::INVALID_CONFIGURATION, "XOpenDisplay returned nullptr", ExceptionTrigger::CREATE);
     }
 
 
@@ -275,11 +321,9 @@ void Implementation::createContext(GLXContext shared) {
     int fbCount;
     GLXFBConfig* fbConfig = glXChooseFBConfig(m_display, DefaultScreen(m_display), { None }, &fbCount);
     if (fbConfig == nullptr) {
-        throw InternalException(make_error_code(GLXError::BAD_FB_CONFIG), "Failed to get framebuffer configurations", ExceptionTrigger::CREATE);
+        throw InternalException(Error::INVALID_CONFIGURATION, "glXChooseFBConfig returned nullptr", ExceptionTrigger::CREATE);
     }
-    EnsureAtExit freeFBConfig([fbConfig] {
-        XFree(fbConfig);
-    });
+    EnsureAtExit freeFBConfigAtExit([fbConfig] { XFree(fbConfig); });
 
 
     //
@@ -288,8 +332,8 @@ void Implementation::createContext(GLXContext shared) {
     const auto contextAttributes = createContextAttributeList(*m_context);
     m_contextHandle = Platform::instance()->glXCreateContextAttribsARB(m_display, fbConfig[0], shared, True, contextAttributes.data());
     XSync(m_display, false);
-    if (m_contextHandle == nullptr || g_errorCode != GLXError::SUCCESS) {
-        throw InternalException(make_error_code(g_errorCode), "Failed to create context", ExceptionTrigger::CREATE);
+    if (m_contextHandle == nullptr || xErrorHandler.errorCode() != Success) {
+        throw InternalException(Error::INVALID_CONFIGURATION, "glXCreateContextAttribsARB returned nullptr (" + xErrorHandler.errorString() + ")", ExceptionTrigger::CREATE);
     }
 
     const int pBufferAttributes[] = {

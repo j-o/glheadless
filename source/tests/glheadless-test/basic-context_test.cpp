@@ -1,6 +1,8 @@
-#if WIN32
+#if defined(WIN32)
 #include <Windows.h>
 #include <gl/GL.h>
+#elif defined(__linux__)
+#include <GL/gl.h>
 #endif
 
 #include <gmock/gmock.h>

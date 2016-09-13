@@ -64,8 +64,6 @@ elseif(APPLE)
     )
 elseif(UNIX)
     set(sources ${sources}
-        ${source_path}/glx/error.h
-        ${source_path}/glx/error.cpp
         ${source_path}/glx/Implementation.h
         ${source_path}/glx/Implementation.cpp
         ${source_path}/glx/Platform.h

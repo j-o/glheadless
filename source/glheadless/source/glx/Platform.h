@@ -3,8 +3,7 @@
 #include <X11/X.h>
 #include <X11/Xlib.h>
 #include <GL/glx.h>
-
-#include "glxext.h"
+#include <GL/glxext.h>
 
 
 namespace glheadless {
