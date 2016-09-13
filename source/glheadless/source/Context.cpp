@@ -35,16 +35,6 @@ Context::~Context() {
 }
 
 
-const PixelFormat& Context::pixelFormat() const {
-    return m_pixelFormat;
-}
-
-
-void Context::setPixelFormat(const PixelFormat& pixelFormat) {
-    m_pixelFormat = pixelFormat;
-}
-
-
 ContextProfile Context::profile() const {
     return m_profile;
 }
@@ -121,7 +111,6 @@ const Implementation* Context::implementation() const {
 
 
 Context& Context::operator=(Context&& other) {
-    m_pixelFormat = other.m_pixelFormat;
     m_version = other.m_version;
     m_profile = other.m_profile;
     m_debugContext = other.m_debugContext;

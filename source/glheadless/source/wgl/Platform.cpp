@@ -106,11 +106,11 @@ Platform::Platform()
     // Set pixel format
     //
     PIXELFORMATDESCRIPTOR pixelFormatParams;
-    pixelFormatParams.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+    pixelFormatParams.dwFlags = PFD_DOUBLEBUFFER_DONTCARE | PFD_SUPPORT_OPENGL;
     pixelFormatParams.iPixelType = PFD_TYPE_RGBA;
-    pixelFormatParams.cColorBits = 32;
-    pixelFormatParams.cDepthBits = 24;
-    pixelFormatParams.cStencilBits = 8;
+    pixelFormatParams.cColorBits = 0;
+    pixelFormatParams.cDepthBits = 0;
+    pixelFormatParams.cStencilBits = 0;
     pixelFormatParams.iLayerType = PFD_MAIN_PLANE;
 
     const auto pixelFormat = ChoosePixelFormat(window.deviceContext(), &pixelFormatParams);

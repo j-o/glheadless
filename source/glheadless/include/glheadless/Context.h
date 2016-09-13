@@ -11,8 +11,8 @@
 #include <memory>
 #include <system_error>
 #include <thread>
+#include <map>
 
-#include <glheadless/PixelFormat.h>
 #include <glheadless/ExceptionTrigger.h>
 
 
@@ -90,18 +90,6 @@ public:
     Context(const Context&) = delete;
     Context(Context&& other);
     ~Context();
-
-    /*!
-     * \return the requested PixelFormat.
-     */
-    const PixelFormat& pixelFormat() const;
-
-    /*!
-     * \brief Sets the requested PixelFormat.
-     *
-     * Only takes effect before create() succeeds.
-     */
-    void setPixelFormat(const PixelFormat& pixelFormat);
 
     /*!
      * \return the requested Version.
@@ -262,7 +250,6 @@ public:
 
 
 private:
-    PixelFormat m_pixelFormat;
     Version m_version;
     ContextProfile m_profile;
     bool m_debugContext;

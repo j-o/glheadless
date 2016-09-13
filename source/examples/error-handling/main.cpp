@@ -9,11 +9,8 @@ using namespace glheadless;
 
 
 int main(int /*argc*/, char* /*argv*/[]) {
-    PixelFormat pixelFormat;
-    pixelFormat.setAttribute(0xFFFFFFFF, 0xFFFFFFFF);
-
     Context context;
-    context.setPixelFormat(pixelFormat);
+    context.setVersion(123, 42);
 
 
     //
