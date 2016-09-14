@@ -25,14 +25,25 @@ namespace {
 std::vector<int> createContextAttributeList(const Context& context) {
     std::map<int, int> attributes;
 
-    attributes[WGL_CONTEXT_MAJOR_VERSION_ARB] = context.version().first;
-    attributes[WGL_CONTEXT_MINOR_VERSION_ARB] = context.version().second;
+    if (context.version().first > 0) {
+        attributes[WGL_CONTEXT_MAJOR_VERSION_ARB] = context.version().first;
+        attributes[WGL_CONTEXT_MINOR_VERSION_ARB] = context.version().second;
+    }
     
     if (context.debugContext()) {
-        attributes[WGL_CONTEXT_FLAGS_ARB] |= WGL_CONTEXT_DEBUG_BIT_ARB;
+        attributes[WGL_CONTEXT_FLAGS_ARB] = WGL_CONTEXT_DEBUG_BIT_ARB;
     }
 
-    attributes[WGL_CONTEXT_PROFILE_MASK_ARB] = context.profile() == ContextProfile::CORE ? WGL_CONTEXT_CORE_PROFILE_BIT_ARB : WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB;
+    switch (context.profile()) {
+        case ContextProfile::CORE:
+            attributes[WGL_CONTEXT_PROFILE_MASK_ARB] = WGL_CONTEXT_CORE_PROFILE_BIT_ARB;
+            break;
+        case ContextProfile::COMPATIBILITY:
+            attributes[WGL_CONTEXT_PROFILE_MASK_ARB] = WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB;
+            break;
+        default:
+            break;
+    }
 
     for (const auto& attribute : context.attributes()) {
         attributes[attribute.first] = attribute.second;

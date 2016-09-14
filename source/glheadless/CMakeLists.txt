@@ -4,7 +4,10 @@
 # 
 
 find_package(OpenGL REQUIRED)
-find_package(EGL REQUIRED)
+
+if(UNIX AND NOT APPLE)
+    find_package(EGL REQUIRED)
+endif()
 
 
 # 
@@ -14,7 +17,9 @@ find_package(EGL REQUIRED)
 # Target name
 set(target glheadless)
 
-option(OPTION_LINUX_USE_EGL "Use EGL instead of GLX implementation on Linux" ON)
+if(UNIX AND NOT APPLE)
+    option(OPTION_LINUX_USE_EGL "Use EGL instead of GLX implementation on Linux" ON)
+endif()
 
 # Exit here if required dependencies are not met
 message(STATUS "Lib ${target}")
