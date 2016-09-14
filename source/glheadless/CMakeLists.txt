@@ -6,7 +6,7 @@
 find_package(OpenGL REQUIRED)
 
 if(UNIX AND NOT APPLE)
-    find_package(EGL REQUIRED)
+    find_package(EGL)
 endif()
 
 
@@ -18,7 +18,12 @@ endif()
 set(target glheadless)
 
 if(UNIX AND NOT APPLE)
-    option(OPTION_LINUX_USE_EGL "Use EGL instead of GLX implementation on Linux" ON)
+    if(EGL_FOUND)
+        message(STATUS "Defaulting to EGL implementation. Unset OPTION_LINUX_USE_EGL to use GLX.")
+        option(OPTION_LINUX_USE_EGL "Use EGL instead of GLX implementation on Linux" ON)
+    else()
+        message(STATUS "EGL not available, using GLX")
+    endif()
 endif()
 
 # Exit here if required dependencies are not met
@@ -71,7 +76,7 @@ elseif(APPLE)
         ${source_path}/cgl/Implementation.cpp
     )
 elseif(UNIX)
-    if (${OPTION_LINUX_USE_EGL})
+    if (EGL_FOUND AND OPTION_LINUX_USE_EGL)
         set(sources ${sources}
             ${source_path}/egl/Implementation.h
             ${source_path}/egl/Implementation.cpp
