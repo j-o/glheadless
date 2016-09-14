@@ -6,6 +6,8 @@
 #include "Platform.h"
 #include "../InternalException.h"
 
+#include <EGL/egl.h>
+
 
 namespace glheadless {
 

@@ -4,6 +4,7 @@
 # 
 
 find_package(OpenGL REQUIRED)
+find_package(EGL REQUIRED)
 
 
 # 
@@ -64,10 +65,10 @@ elseif(APPLE)
     )
 elseif(UNIX)
     set(sources ${sources}
-        ${source_path}/glx/Implementation.h
-        ${source_path}/glx/Implementation.cpp
-        ${source_path}/glx/Platform.h
-        ${source_path}/glx/Platform.cpp
+        ${source_path}/egl/Implementation.h
+        ${source_path}/egl/Implementation.cpp
+        ${source_path}/egl/Platform.h
+        ${source_path}/egl/Platform.cpp
     )
 endif()
 
@@ -154,6 +155,7 @@ target_link_libraries(${target}
     PUBLIC
     ${DEFAULT_LIBRARIES}
     ${OPENGL_LIBRARIES}
+    ${EGL_LIBRARIES}
 
     INTERFACE
 )

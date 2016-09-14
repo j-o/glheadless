@@ -7,7 +7,7 @@
 #elif defined(__APPLE__)
 #include "cgl/Implementation.h"
 #elif defined(__linux__)
-#include "glx/Implementation.h"
+#include "egl/Implementation.h"
 #endif
 
 
