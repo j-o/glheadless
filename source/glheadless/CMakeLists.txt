@@ -14,6 +14,8 @@ find_package(EGL REQUIRED)
 # Target name
 set(target glheadless)
 
+option(OPTION_LINUX_USE_EGL "Use EGL instead of GLX implementation on Linux" ON)
+
 # Exit here if required dependencies are not met
 message(STATUS "Lib ${target}")
 
@@ -64,12 +66,21 @@ elseif(APPLE)
         ${source_path}/cgl/Implementation.cpp
     )
 elseif(UNIX)
-    set(sources ${sources}
-        ${source_path}/egl/Implementation.h
-        ${source_path}/egl/Implementation.cpp
-        ${source_path}/egl/Platform.h
-        ${source_path}/egl/Platform.cpp
-    )
+    if (${OPTION_LINUX_USE_EGL})
+        set(sources ${sources}
+            ${source_path}/egl/Implementation.h
+            ${source_path}/egl/Implementation.cpp
+            ${source_path}/egl/Platform.h
+            ${source_path}/egl/Platform.cpp
+        )
+    else()
+        set(sources ${sources}
+            ${source_path}/glx/Implementation.h
+            ${source_path}/glx/Implementation.cpp
+            ${source_path}/glx/Platform.h
+            ${source_path}/glx/Platform.cpp
+        )
+    endif()
 endif()
 
 # Group source files
@@ -171,6 +182,7 @@ target_compile_definitions(${target}
     PUBLIC
     $<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:${target_upper}_STATIC_DEFINE>
     ${DEFAULT_COMPILE_DEFINITIONS}
+    $<$<BOOL:${OPTION_LINUX_USE_EGL}>:${target_upper}_LINUX_USE_EGL>
 
     INTERFACE
 )

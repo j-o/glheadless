@@ -7,7 +7,11 @@
 #elif defined(__APPLE__)
 #include "cgl/Implementation.h"
 #elif defined(__linux__)
+#if defined(GLHEADLESS_LINUX_USE_EGL)
 #include "egl/Implementation.h"
+#else
+#include "glx/Implementation.h"
+#endif // defined(GLHEADLESS_LINUX_USE_EGL)
 #endif
 
 
