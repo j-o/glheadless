@@ -19,7 +19,6 @@ using namespace glheadless;
 int main(int /*argc*/, char* /*argv*/[]) {
     //! [Creating a context]
     Context context;
-    context.setVersion(3, 2);
     context.create();
     //! [Creating a context]
 

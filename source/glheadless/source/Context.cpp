@@ -24,8 +24,8 @@ Context Context::currentContext() {
 
 
 Context::Context()
-: m_version(3, 2)
-, m_profile(ContextProfile::CORE)
+: m_version(0, 0)
+, m_profile(ContextProfile::NONE)
 , m_debugContext(false)
 , m_exceptionTriggers(ExceptionTrigger::NONE)
 , m_implementation(std::make_unique<Implementation>(this)) {

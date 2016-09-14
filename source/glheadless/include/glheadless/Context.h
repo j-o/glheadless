@@ -29,6 +29,7 @@ class Implementation;
  * \brief Describes the requested OpenGL profile (core or compatibility), if supported on the current platform.
  */
 enum class ContextProfile : unsigned int {
+    NONE,
     CORE,
     COMPATIBILITY
 };

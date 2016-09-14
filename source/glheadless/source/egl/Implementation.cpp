@@ -18,8 +18,10 @@ namespace {
 std::vector<int> createContextAttributeList(const Context& context) {
     std::map<int, int> attributes;
 
-    attributes[EGL_CONTEXT_MAJOR_VERSION] = context.version().first;
-    attributes[EGL_CONTEXT_MINOR_VERSION] = context.version().second;
+    if (context.version().first > 0) {
+        attributes[EGL_CONTEXT_MAJOR_VERSION] = context.version().first;
+        attributes[EGL_CONTEXT_MINOR_VERSION] = context.version().second;
+    }
 
     if (context.debugContext()) {
         if (Platform::instance()->version15()) {
@@ -29,7 +31,16 @@ std::vector<int> createContextAttributeList(const Context& context) {
         }
     }
 
-    attributes[EGL_CONTEXT_OPENGL_PROFILE_MASK] = context.profile() == ContextProfile::CORE ? EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT : EGL_CONTEXT_OPENGL_COMPATIBILITY_PROFILE_BIT;
+    switch (context.profile()) {
+        case ContextProfile::CORE:
+            attributes[EGL_CONTEXT_OPENGL_PROFILE_MASK] = EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT;
+            break;
+        case ContextProfile::COMPATIBILITY:
+            attributes[EGL_CONTEXT_OPENGL_PROFILE_MASK] = EGL_CONTEXT_OPENGL_COMPATIBILITY_PROFILE_BIT;
+            break;
+        default:
+            break;
+    }
 
     for (const auto& attribute : context.attributes()) {
         attributes[attribute.first] = attribute.second;
