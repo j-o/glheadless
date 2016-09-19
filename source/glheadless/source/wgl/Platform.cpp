@@ -1,6 +1,5 @@
 #include "Platform.h"
 
-#include <system_error>
 #include <functional>
 #include <mutex>
 #include <atomic>
@@ -75,20 +74,20 @@ Platform::Platform()
     //
     // Set pixel format
     //
-    PIXELFORMATDESCRIPTOR pixelFormatParams;
-    pixelFormatParams.dwFlags = PFD_DOUBLEBUFFER_DONTCARE | PFD_SUPPORT_OPENGL;
-    pixelFormatParams.iPixelType = PFD_TYPE_RGBA;
-    pixelFormatParams.cColorBits = 0;
-    pixelFormatParams.cDepthBits = 0;
-    pixelFormatParams.cStencilBits = 0;
-    pixelFormatParams.iLayerType = PFD_MAIN_PLANE;
+    PIXELFORMATDESCRIPTOR pixelFormatDesc;
+    ZeroMemory(&pixelFormatDesc, sizeof(PIXELFORMATDESCRIPTOR));
+    pixelFormatDesc.nSize = sizeof(PIXELFORMATDESCRIPTOR);
+    pixelFormatDesc.nVersion = 1;
+    pixelFormatDesc.dwFlags = PFD_SUPPORT_OPENGL;
+    pixelFormatDesc.iPixelType = PFD_TYPE_RGBA;
+    pixelFormatDesc.iLayerType = PFD_MAIN_PLANE;
 
-    const auto pixelFormat = ChoosePixelFormat(window.deviceContext(), &pixelFormatParams);
+    const auto pixelFormat = ChoosePixelFormat(window.deviceContext(), &pixelFormatDesc);
     if (pixelFormat == 0) {
         throw InternalException(Error::INVALID_CONFIGURATION, "ChoosePixelFormat failed on temporary context", ExceptionTrigger::CREATE);
     }
 
-    auto success = SetPixelFormat(window.deviceContext(), pixelFormat, &pixelFormatParams);
+    auto success = SetPixelFormat(window.deviceContext(), pixelFormat, &pixelFormatDesc);
     if (!success) {
         throw InternalException(Error::INVALID_CONFIGURATION, "SetPixelFormat failed on temporary context", ExceptionTrigger::CREATE);
     }
