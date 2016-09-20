@@ -58,28 +58,16 @@ const auto k_booleanAttributes = std::set<_CGLPixelFormatAttribute> {
 std::vector<_CGLPixelFormatAttribute> createPixelFormatAttributeList(const Context* context) {
     std::map<_CGLPixelFormatAttribute, int> attributes;
 
-    const auto& pixelFormat = context->pixelFormat();
-
     attributes[kCGLPFAAccelerated] = GL_TRUE;
     attributes[kCGLPFAClosestPolicy] = GL_TRUE;
-    attributes[kCGLPFADoubleBuffer] = pixelFormat.doubleBuffer() ? GL_TRUE : GL_FALSE;
-    attributes[kCGLPFAColorSize] = pixelFormat.redBits() + pixelFormat.greenBits() + pixelFormat.blueBits();
-    attributes[kCGLPFAAlphaSize] = pixelFormat.alphaBits();
-    attributes[kCGLPFADepthSize] = pixelFormat.depthBits();
-    attributes[kCGLPFAStencilSize] = pixelFormat.stencilBits();
 
     if (context->version().first >= 4) {
         attributes[kCGLPFAOpenGLProfile] = kCGLOGLPVersion_GL4_Core;
     } else if (context->version().first >= 3) {
         attributes[kCGLPFAOpenGLProfile] = kCGLOGLPVersion_GL3_Core;
-    } else {
+    } else if (context->version().first > 0) {
         attributes[kCGLPFAOpenGLProfile] = kCGLOGLPVersion_Legacy;
     }
-
-    for (const auto& attribute : pixelFormat.attributes()) {
-        attributes[static_cast<_CGLPixelFormatAttribute>(attribute.first)] = attribute.second;
-    }
-
 
     std::vector<_CGLPixelFormatAttribute> list;
     list.reserve(attributes.size() * 2 + 1);
@@ -95,7 +83,7 @@ std::vector<_CGLPixelFormatAttribute> createPixelFormatAttributeList(const Conte
     }
     list.push_back(static_cast<_CGLPixelFormatAttribute>(0)); // finalize list
 
-    return std::move(list);
+    return list;
 }
 
 
@@ -107,13 +95,13 @@ Context Implementation::currentContext() {
 
     const auto contextHandle = CGLGetCurrentContext();
     if (contextHandle == nullptr) {
-        context.implementation()->setError(Error::CONTEXT_NOT_CURRENT, "CGLGetCurrentContext returned nullptr", ExceptionTrigger::CREATE);
+        context.implementation()->setError(Error::INVALID_CONTEXT, "CGLGetCurrentContext returned nullptr", ExceptionTrigger::CREATE);
         return std::move(context);
     }
 
     const auto pixelFormat = CGLGetPixelFormat(contextHandle);
     if (pixelFormat == nullptr) {
-        context.implementation()->setError(Error::CONTEXT_NOT_CURRENT, "CGLGetPixelFormat returned nullptr", ExceptionTrigger::CREATE);
+        context.implementation()->setError(Error::INVALID_CONTEXT, "CGLGetPixelFormat returned nullptr", ExceptionTrigger::CREATE);
         return std::move(context);
     }
 
@@ -190,7 +178,7 @@ bool Implementation::setPixelFormat() {
     GLint numVirtualScreens;
     const auto error = CGLChoosePixelFormat(pixelFormatAttributes.data(), &m_pixelFormatHandle, &numVirtualScreens);
     if (error != kCGLNoError) {
-        return setError(error, "CGLChoosePixelFormat failed", ExceptionTrigger::CREATE);
+        return setError(Error::INVALID_CONFIGURATION, "CGLChoosePixelFormat failed", ExceptionTrigger::CREATE);
     }
 
     return true;
@@ -200,7 +188,7 @@ bool Implementation::setPixelFormat() {
 bool Implementation::createContext(CGLContextObj shared) {
     const auto error = CGLCreateContext(m_pixelFormatHandle, shared, &m_contextHandle);
     if (error != kCGLNoError) {
-        return setError(error, "CGLCreateContext failed", ExceptionTrigger::CREATE);
+        return setError(Error::INVALID_CONFIGURATION, "CGLCreateContext failed", ExceptionTrigger::CREATE);
     }
     return true;
 }
@@ -231,7 +219,7 @@ Implementation& Implementation::operator=(Implementation&& other) {
 bool Implementation::makeCurrent() noexcept {
     const auto error = CGLSetCurrentContext(m_contextHandle);
     if (error != kCGLNoError) {
-        return setError(error, "CGLSetCurrentContext failed", ExceptionTrigger::CHANGE_CURRENT);
+        return setError(Error::INVALID_CONTEXT, "CGLSetCurrentContext failed", ExceptionTrigger::CHANGE_CURRENT);
     }
     return true;
 }
@@ -240,7 +228,7 @@ bool Implementation::makeCurrent() noexcept {
 bool Implementation::doneCurrent() noexcept {
     const auto error = CGLSetCurrentContext(nullptr);
     if (error != kCGLNoError) {
-        return setError(error, "CGLSetCurrentContext failed", ExceptionTrigger::CHANGE_CURRENT);
+        return setError(Error::INVALID_CONTEXT, "CGLSetCurrentContext failed", ExceptionTrigger::CHANGE_CURRENT);
     }
     return true;
 }
