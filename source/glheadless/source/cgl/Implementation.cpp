@@ -10,6 +10,7 @@
 
 #include <glheadless/Context.h>
 #include <glheadless/error.h>
+#include <glheadless/ContextFormat.h>
 
 #include "error.h"
 
@@ -24,48 +25,48 @@ namespace {
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
 const auto k_booleanAttributes = std::set<_CGLPixelFormatAttribute> {
-    kCGLPFAAllRenderers,
-    kCGLPFADoubleBuffer,
-    kCGLPFAStereo,
-    kCGLPFAMinimumPolicy,
-    kCGLPFAMaximumPolicy,
-    kCGLPFAOffScreen,
-    kCGLPFAFullScreen,
-    kCGLPFAAuxDepthStencil,
-    kCGLPFAColorFloat,
-    kCGLPFAMultisample,
-    kCGLPFASupersample,
-    kCGLPFASampleAlpha,
-    kCGLPFASingleRenderer,
-    kCGLPFANoRecovery,
-    kCGLPFAAccelerated,
-    kCGLPFAClosestPolicy,
-    kCGLPFARobust,
-    kCGLPFABackingStore,
-    kCGLPFAMPSafe,
-    kCGLPFAWindow,
-    kCGLPFAMultiScreen,
-    kCGLPFACompliant,
-    kCGLPFAPBuffer,
-    kCGLPFARemotePBuffer,
-    kCGLPFAAllowOfflineRenderers,
-    kCGLPFAAcceleratedCompute
+        kCGLPFAAllRenderers,
+        kCGLPFADoubleBuffer,
+        kCGLPFAStereo,
+        kCGLPFAMinimumPolicy,
+        kCGLPFAMaximumPolicy,
+        kCGLPFAOffScreen,
+        kCGLPFAFullScreen,
+        kCGLPFAAuxDepthStencil,
+        kCGLPFAColorFloat,
+        kCGLPFAMultisample,
+        kCGLPFASupersample,
+        kCGLPFASampleAlpha,
+        kCGLPFASingleRenderer,
+        kCGLPFANoRecovery,
+        kCGLPFAAccelerated,
+        kCGLPFAClosestPolicy,
+        kCGLPFARobust,
+        kCGLPFABackingStore,
+        kCGLPFAMPSafe,
+        kCGLPFAWindow,
+        kCGLPFAMultiScreen,
+        kCGLPFACompliant,
+        kCGLPFAPBuffer,
+        kCGLPFARemotePBuffer,
+        kCGLPFAAllowOfflineRenderers,
+        kCGLPFAAcceleratedCompute
 };
 
 #pragma GCC diagnostic pop
 
 
-std::vector<_CGLPixelFormatAttribute> createPixelFormatAttributeList(const Context* context) {
+std::vector<_CGLPixelFormatAttribute> createPixelFormatAttributeList(const ContextFormat& format) {
     std::map<_CGLPixelFormatAttribute, int> attributes;
 
     attributes[kCGLPFAAccelerated] = GL_TRUE;
     attributes[kCGLPFAClosestPolicy] = GL_TRUE;
 
-    if (context->version().first >= 4) {
+    if (format.versionMajor >= 4) {
         attributes[kCGLPFAOpenGLProfile] = kCGLOGLPVersion_GL4_Core;
-    } else if (context->version().first >= 3) {
+    } else if (format.versionMajor >= 3) {
         attributes[kCGLPFAOpenGLProfile] = kCGLOGLPVersion_GL3_Core;
-    } else if (context->version().first > 0) {
+    } else if (format.versionMajor > 0) {
         attributes[kCGLPFAOpenGLProfile] = kCGLOGLPVersion_Legacy;
     }
 
@@ -90,154 +91,122 @@ std::vector<_CGLPixelFormatAttribute> createPixelFormatAttributeList(const Conte
 } // unnamed namespace
 
 
-Context Implementation::currentContext() {
-    Context context;
+struct State {
+    CGLContextObj contextHandle;
+    CGLPixelFormatObj pixelFormatHandle;
+    bool owning;
 
-    const auto contextHandle = CGLGetCurrentContext();
-    if (contextHandle == nullptr) {
-        context.implementation()->setError(Error::INVALID_CONTEXT, "CGLGetCurrentContext returned nullptr", ExceptionTrigger::CREATE);
-        return std::move(context);
+    State()
+    : contextHandle(nullptr)
+    , pixelFormatHandle(nullptr)
+    , owning(true) {
+    }
+};
+
+
+std::unique_ptr<Context> Implementation::getCurrent() {
+    const auto state = new State;
+    state->owning = false;
+    auto context = std::make_unique<Context>(state);
+
+    state->contextHandle = CGLGetCurrentContext();
+    if (state->contextHandle == nullptr) {
+        context->setError(Error::INVALID_CONTEXT, "CGLGetCurrentContext returned nullptr", ExceptionTrigger::CREATE);
+        return context;
     }
 
-    const auto pixelFormat = CGLGetPixelFormat(contextHandle);
-    if (pixelFormat == nullptr) {
-        context.implementation()->setError(Error::INVALID_CONTEXT, "CGLGetPixelFormat returned nullptr", ExceptionTrigger::CREATE);
-        return std::move(context);
+    return context;
+}
+
+
+std::unique_ptr<Context> Implementation::create(const ContextFormat& format) {
+    auto context = std::make_unique<Context>(new State);
+
+    auto success = setPixelFormat(context.get(), format);
+    if (!success) {
+        return context;
     }
 
-    context.implementation()->setExternal(contextHandle, pixelFormat);
-
-    return std::move(context);
+    createContext(context.get(), nullptr);
+    return context;
 }
 
 
-Implementation::Implementation(Context* context)
-: AbstractImplementation(context)
-, m_contextHandle(nullptr)
-, m_pixelFormatHandle(nullptr)
-, m_owning(true) {
-}
+std::unique_ptr<Context> Implementation::create(const Context* shared, const ContextFormat& format) {
+    auto context = std::make_unique<Context>(new State);
 
-
-Implementation::Implementation(Implementation&& other)
-: AbstractImplementation(std::forward<AbstractImplementation>(other))
-, m_contextHandle(other.m_contextHandle)
-, m_pixelFormatHandle(other.m_pixelFormatHandle)
-, m_owning(other.m_owning) {
-    other.m_contextHandle = nullptr;
-    other.m_pixelFormatHandle = nullptr;
-}
-
-
-Implementation::~Implementation() {
-    destroy();
-}
-
-
-bool Implementation::create() {
-    m_owningThread = std::this_thread::get_id();
-    
-    return setPixelFormat()
-        && createContext();
-}
-
-
-bool Implementation::create(const Context* shared) {
-    m_owningThread = std::this_thread::get_id();
-    
-    return setPixelFormat()
-        && createContext(shared->implementation()->m_contextHandle);
-}
-    
-    
-bool Implementation::destroy() {
-    if (m_owningThread != std::thread::id() && m_owningThread != std::this_thread::get_id()) {
-        return setError(Error::INVALID_THREAD_ACCESS, "A context must be destroyed on the same thread that created it", ExceptionTrigger::CREATE);
+    auto success = setPixelFormat(context.get(), format);
+    if (!success) {
+        return context;
     }
 
-    if (m_owning) {
-        if (m_contextHandle != nullptr) {
-            CGLReleaseContext(m_contextHandle);
-            m_contextHandle = nullptr;
-        }
-        if (m_pixelFormatHandle != nullptr) {
-            CGLReleasePixelFormat(m_pixelFormatHandle);
-            m_pixelFormatHandle = nullptr;
-        }
+    createContext(context.get(), shared->state()->contextHandle);
+    return context;
+}
+
+
+bool Implementation::destroy(Context* context) {
+    if (context->state() == nullptr) {
+        return true;
     }
 
-    m_owningThread = std::thread::id();
+    const auto state = context->state();
+    if (state->contextHandle != nullptr) {
+        CGLReleaseContext(state->contextHandle);
+        state->contextHandle = nullptr;
+    }
+    if (state->pixelFormatHandle != nullptr) {
+        CGLReleasePixelFormat(state->pixelFormatHandle);
+        state->pixelFormatHandle = nullptr;
+    }
 
     return true;
 }
 
 
-bool Implementation::setPixelFormat() {
-    const auto pixelFormatAttributes = createPixelFormatAttributeList(m_context);
+bool Implementation::valid(const Context* context) {
+    return context->state()->contextHandle != nullptr
+        && (!context->state()->owning || context->state()->pixelFormatHandle != nullptr);
+}
 
-    GLint numVirtualScreens;
-    const auto error = CGLChoosePixelFormat(pixelFormatAttributes.data(), &m_pixelFormatHandle, &numVirtualScreens);
+
+bool Implementation::makeCurrent(Context* context) {
+    const auto error = CGLSetCurrentContext(context->state()->contextHandle);
     if (error != kCGLNoError) {
-        return setError(Error::INVALID_CONFIGURATION, "CGLChoosePixelFormat failed", ExceptionTrigger::CREATE);
-    }
-
-    return true;
-}
-
-
-bool Implementation::createContext(CGLContextObj shared) {
-    const auto error = CGLCreateContext(m_pixelFormatHandle, shared, &m_contextHandle);
-    if (error != kCGLNoError) {
-        return setError(Error::INVALID_CONFIGURATION, "CGLCreateContext failed", ExceptionTrigger::CREATE);
+        return context->setError(Error::INVALID_CONTEXT, "CGLSetCurrentContext failed", ExceptionTrigger::CHANGE_CURRENT);
     }
     return true;
 }
 
 
-void Implementation::setExternal(CGLContextObj context, CGLPixelFormatObj pixelFormat) {
-    m_contextHandle = context;
-    m_pixelFormatHandle = pixelFormat;
-    m_owning = false;
-}
-
-
-Implementation& Implementation::operator=(Implementation&& other) {
-    AbstractImplementation::operator=(std::forward<Implementation>(other));
-
-    m_contextHandle = other.m_contextHandle;
-    other.m_pixelFormatHandle = nullptr;
-
-    m_pixelFormatHandle = other.m_pixelFormatHandle;
-    other.m_pixelFormatHandle = nullptr;
-
-    m_owning = other.m_owning;
-
-    return *this;
-}
-
-
-bool Implementation::makeCurrent() noexcept {
-    const auto error = CGLSetCurrentContext(m_contextHandle);
-    if (error != kCGLNoError) {
-        return setError(Error::INVALID_CONTEXT, "CGLSetCurrentContext failed", ExceptionTrigger::CHANGE_CURRENT);
-    }
-    return true;
-}
-
-
-bool Implementation::doneCurrent() noexcept {
+bool Implementation::doneCurrent(Context* context) {
     const auto error = CGLSetCurrentContext(nullptr);
     if (error != kCGLNoError) {
-        return setError(Error::INVALID_CONTEXT, "CGLSetCurrentContext failed", ExceptionTrigger::CHANGE_CURRENT);
+        return context->setError(Error::INVALID_CONTEXT, "CGLSetCurrentContext failed", ExceptionTrigger::CHANGE_CURRENT);
     }
     return true;
 }
 
 
-bool Implementation::valid() const {
-    return !lastErrorCode()
-        && m_contextHandle != nullptr
-        && m_pixelFormatHandle != nullptr;
+bool Implementation::setPixelFormat(Context* context, const ContextFormat& format) {
+    const auto pixelFormatAttributes = createPixelFormatAttributeList(format);
+
+    GLint numVirtualScreens;
+    const auto error = CGLChoosePixelFormat(pixelFormatAttributes.data(), &context->state()->pixelFormatHandle, &numVirtualScreens);
+    if (error != kCGLNoError) {
+        return context->setError(Error::INVALID_CONFIGURATION, "CGLChoosePixelFormat failed", ExceptionTrigger::CREATE);
+    }
+
+    return true;
+}
+
+
+bool Implementation::createContext(Context* context, CGLContextObj shared) {
+    const auto error = CGLCreateContext(context->state()->pixelFormatHandle, shared, &context->state()->contextHandle);
+    if (error != kCGLNoError) {
+        return context->setError(Error::INVALID_CONFIGURATION, "CGLCreateContext failed", ExceptionTrigger::CREATE);
+    }
+    return true;
 }
 
 

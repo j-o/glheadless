@@ -45,6 +45,8 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
     ${include_path}/Context.h
+    ${include_path}/ContextFactory.h
+    ${include_path}/ContextFormat.h
     ${include_path}/error.h
     ${include_path}/ExceptionTrigger.h
     ${include_path}/ExceptionTrigger.hpp
@@ -54,6 +56,7 @@ set(sources
     ${source_path}/AbstractImplementation.h
     ${source_path}/AbstractImplementation.cpp
     ${source_path}/Context.cpp
+    ${source_path}/ContextFactory.cpp
     ${source_path}/error.cpp
     ${source_path}/InternalException.h
     ${source_path}/InternalException.cpp

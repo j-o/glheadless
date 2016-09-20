@@ -15,6 +15,9 @@
 namespace glheadless {
 
 
+struct ContextFormat;
+
+
 /*!
  * \brief Non-polymorphic base class for context implemetations.
  *
@@ -22,31 +25,27 @@ namespace glheadless {
  * in which case they must provide the public methods (lastErrorCode() and lastErrorMessage()) themselves.
  */
 class AbstractImplementation {
+public:
+    static AbstractImplementation* instance();
 
 
 public:
-    AbstractImplementation(const AbstractImplementation&) = delete;
-    AbstractImplementation(AbstractImplementation&& other) = default;
+    virtual std::unique_ptr<Context> getCurrent() = 0;
 
-    const std::error_code& lastErrorCode() const;
-    const std::string& lastErrorMessage() const;
+    virtual std::unique_ptr<Context> create(const ContextFormat& format) = 0;
+    virtual std::unique_ptr<Context> create(const Context* shared, const ContextFormat& format) = 0;
 
-    AbstractImplementation& operator=(const AbstractImplementation&) = delete;
-    AbstractImplementation& operator=(AbstractImplementation&& other) = default;
+    virtual bool destroy(Context* context) = 0;
+
+    virtual bool valid(const Context* context) = 0;
+
+    virtual bool makeCurrent(Context* context) = 0;
+    virtual bool doneCurrent(Context* context) = 0;
 
 
 protected:
-    AbstractImplementation(Context* context);
+    AbstractImplementation();
     virtual ~AbstractImplementation() = default;
-
-    bool setError(Error code, const std::string& message, ExceptionTrigger exceptionTrigger);
-    bool setError(const std::error_code& code, const std::string& message, ExceptionTrigger exceptionTrigger);
-
-
-protected:
-    Context* m_context;
-    std::error_code m_lastErrorCode;
-    std::string m_lastErrorMessage;
 };
 
 }  // namespace glheadless

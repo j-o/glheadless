@@ -13,6 +13,7 @@
 #include <thread>
 #include <map>
 
+#include <glheadless/error.h>
 #include <glheadless/ExceptionTrigger.h>
 
 
@@ -22,17 +23,7 @@
 namespace glheadless {
 
 
-class Implementation;
-
-
-/*!
- * \brief Describes the requested OpenGL profile (core or compatibility), if supported on the current platform.
- */
-enum class ContextProfile : unsigned int {
-    NONE,
-    CORE,
-    COMPATIBILITY
-};
+struct State;
 
 
 /*!
@@ -55,132 +46,10 @@ enum class ContextProfile : unsigned int {
  */
 class GLHEADLESS_API Context {
 public:
-    /*!
-     * \brief OpenGL version imformation (major, minor)
-     */
-    using Version = std::pair<int, int>;
-
-
-public:
-    /*!
-     * \brief Captures the current context.
-     *
-     * The current context does not have be created through glheadless, any context can be captured, e.g., contexts
-     * created through Qt or GLFW. The only requirement is that is was made current for the calling thread.
-     *
-     * The returned context will be "non-owning", i.e., it is only valid as long as the original context exists and will
-     * not be destroyed at the end of the object lifetime.
-     * Be careful when calling makeCurrent() on this context, as internal state of the original creating library might
-     * be invalidated. Capturing the current context is only intended for creating a shared context via
-     * create(const Context& shared).
-     *
-     * \exception std::system_error if any error occurs and exception ExceptionTrigger::CREATE is enabled.
-     *
-     * \return the current Context.
-     */
-    static Context currentContext();
-
-
-public:
-    /*!
-     * \brief Creates a context with default configuration.
-     *
-     * The default configuration is: version 3.2, core profile, no debugging and using the default PixelFormat.
-     */
-    Context();
+    Context(State* state);
     Context(const Context&) = delete;
     Context(Context&& other);
     ~Context();
-
-    /*!
-     * \return the requested Version.
-     */
-    const Version& version() const;
-
-    /*!
-     * \brief Sets the requested version.
-     *
-     * Only takes effect before create() succeeds.
-     */
-    void setVersion(int major, int minor);
-
-    /*!
-     * \return the requested ContextProfile.
-     */
-    ContextProfile profile() const;
-
-    /*!
-     * \brief Sets the requested ContextProfile.
-     *
-     * Only takes effect before create() succeeds.
-     */
-    void setProfile(const ContextProfile profile);
-
-    /*!
-     * \return whether a debug context is requested.
-     */
-    bool debugContext() const;
-
-    /*!
-     * \brief Sets whether a debug context is requested.
-     *
-     * Only takes effect before create() succeeds.
-     */
-    void setDebugContext(const bool debugContext);
-
-    /*!
-     * \see setAttribute
-     *
-     * \return the raw attributes
-     */
-    const std::map<int, int>& attributes() const;
-
-    /*!
-     * \brief Sets a raw attribute.
-     *
-     * A raw attribute is a platform-dependent attribute that should be passed to the context creation function (e.g.,
-     * wglCreateContextAttribs and glxCreateContextAttribs). Any attributes specified here override attributes derived
-     * from the settings above.
-     * Boolean attributes are specified with their name and GL_FALSE/GL_TRUE as value, regardless of the actual
-     * operating system API.
-     *
-     * Only takes effect before create() succeeds.
-     */
-    void setAttribute(int name, int value);
-
-    /*!
-     * \brief Tries to create a context according to the settings configured above.
-     *
-     * \exception std::system_error if any error occurs and exception ExceptionTrigger::CREATE is enabled.
-     *
-     * \return true on success.
-     */
-    bool create();
-
-    /*!
-     * \brief Tries to create a shared context according to the settings configured above.
-     *
-     * Make sure `shared` is not current on any thread at the time of calling.
-     * Use Context:currentContext() to get a handle to the current context for sharing.
-     *
-     * \param shared The context whose resources should be shared with the new context.
-     *
-     * \exception std::system_error if any error occurs and exception ExceptionTrigger::CREATE is enabled.
-     *
-     * \return true on success.
-     */
-    bool create(const Context& shared);
-
-    /*!
-     * \brief Destroys the context.
-     *
-     * Must be called from the same thread as create().
-     *
-     * \exception std::system_error if any error occurs and exception ExceptionTrigger::CREATE is enabled.
-     *
-     * \return true on success
-     */
-    bool destroy();
 
     /*!
      * \brief Makes this context current for the calling thread.
@@ -210,6 +79,9 @@ public:
      */
     bool valid() const;
 
+    bool setError(Error code, const std::string& message, ExceptionTrigger exceptionTrigger);
+    bool setError(const std::error_code& code, const std::string& message, ExceptionTrigger exceptionTrigger);
+
     /*!
      * \return an std::error_code describing the last error.
      */
@@ -232,32 +104,20 @@ public:
      */
     void setExceptionTriggers(ExceptionTrigger exceptions);
 
-    /*!
-     * \brief For internal use.
-     *
-     * \return The concrete implementation.
-     */
-    Implementation* implementation();
+    State* state();
 
-    /*!
-     * \brief For internal use.
-     *
-     * \return The concrete implementation.
-     */
-    const Implementation* implementation() const;
+    const State* state() const;
 
     Context& operator=(const Context&) = delete;
     Context& operator=(Context&& other);
 
 
 private:
-    Version m_version;
-    ContextProfile m_profile;
-    bool m_debugContext;
-    std::map<int, int> m_attributes;
-    ExceptionTrigger m_exceptionTriggers;
+    State* m_state;
 
-    std::unique_ptr<Implementation> m_implementation;
+    ExceptionTrigger m_exceptionTriggers;
+    std::error_code m_lastErrorCode;
+    std::string m_lastErrorMessage;
 };
 
     

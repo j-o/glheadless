@@ -11,6 +11,7 @@
 #endif
 
 #include <glheadless/Context.h>
+#include <glheadless/ContextFactory.h>
 
 
 using namespace glheadless;
@@ -18,8 +19,7 @@ using namespace glheadless;
 
 int main(int /*argc*/, char* /*argv*/[]) {
     //! [Creating a context]
-    Context context;
-    context.create();
+    auto context = ContextFactory::create();
     //! [Creating a context]
 
 

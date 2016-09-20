@@ -1,6 +1,7 @@
 #include <gmock/gmock.h>
 
 #include <glheadless/Context.h>
+#include <glheadless/ContextFactory.h>
 
 
 using namespace glheadless;
@@ -12,65 +13,54 @@ class SharedContext_Test : public testing::Test {
 
 
 TEST_F(SharedContext_Test, Create) {
-    Context context1;
+    auto context1 = ContextFactory::create();
+    ASSERT_TRUE(context1->valid());
 
-    context1.create();
-    ASSERT_TRUE(context1.valid());
-
-    Context context2;
-    context2.create(context1);
-    EXPECT_TRUE(context2.valid());
-    EXPECT_FALSE(context2.lastErrorCode());
+    auto context2 = ContextFactory::create(context1.get());
+    EXPECT_TRUE(context2->valid());
+    EXPECT_FALSE(context2->lastErrorCode());
 }
 
 
 TEST_F(SharedContext_Test, MakeCurrent) {
-    Context context1;
+    auto context1 = ContextFactory::create();
+    ASSERT_TRUE(context1->valid());
 
-    context1.create();
-    ASSERT_TRUE(context1.valid());
+    auto context2 = ContextFactory::create(context1.get());
+    ASSERT_TRUE(context2->valid());
 
-    Context context2;
-    context2.create(context1);
-    ASSERT_TRUE(context2.valid());
-
-    auto success = context1.makeCurrent();
+    auto success = context1->makeCurrent();
     EXPECT_TRUE(success);
 
-    success = context2.makeCurrent();
+    success = context2->makeCurrent();
     EXPECT_TRUE(success);
 }
 
 
 TEST_F(SharedContext_Test, Capture) {
-    Context context1;
+    auto context1 = ContextFactory::create();
+    ASSERT_TRUE(context1->valid());
 
-    context1.create();
-    ASSERT_TRUE(context1.valid());
-
-    auto success = context1.makeCurrent();
+    auto success = context1->makeCurrent();
     ASSERT_TRUE(success);
 
-    auto context2 = Context::currentContext();
-    EXPECT_TRUE(context2.valid());
+    auto context2 = ContextFactory::getCurrent();
+    EXPECT_TRUE(context2->valid());
 }
 
 
 TEST_F(SharedContext_Test, DestroyCaptured) {
-    Context context1;
+    auto context1 = ContextFactory::create();
+    ASSERT_TRUE(context1->valid());
 
-    context1.create();
-    ASSERT_TRUE(context1.valid());
-
-    auto success = context1.makeCurrent();
+    auto success = context1->makeCurrent();
     ASSERT_TRUE(success);
 
-    auto context2 = Context::currentContext();
-    ASSERT_TRUE(context2.valid());
+    auto context2 = ContextFactory::getCurrent();
+    ASSERT_TRUE(context2->valid());
 
-    context2.destroy();
-    EXPECT_TRUE(context1.valid());
+    context2 = nullptr;
 
-    success = context1.makeCurrent();
+    success = context1->makeCurrent();
     EXPECT_TRUE(success);
 }

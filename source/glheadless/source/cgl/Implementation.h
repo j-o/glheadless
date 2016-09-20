@@ -3,50 +3,32 @@
 #include "../AbstractImplementation.h"
 
 #include <OpenGL/CGLTypes.h>
+#include <glheadless/ContextFormat.h>
 
 
 namespace glheadless {
 
 
-class Context;
-
-
 class Implementation : public AbstractImplementation {
 public:
-    static Context currentContext();
+    virtual std::unique_ptr<Context> getCurrent() override;
 
+    virtual std::unique_ptr<Context> create(const ContextFormat& format) override;
 
-public:
-    explicit Implementation(Context* context);
-    Implementation(const Implementation&) = delete;
-    Implementation(Implementation&& other);
-    ~Implementation();
+    virtual std::unique_ptr<Context> create(const Context* shared, const ContextFormat& format) override;
 
-    bool create();
-    bool create(const Context* shared);
-    
-    bool destroy();
+    virtual bool destroy(Context* context) override;
 
-    bool makeCurrent() noexcept;
-    bool doneCurrent() noexcept;
+    virtual bool valid(const Context* context) override;
 
-    bool valid() const;
+    virtual bool makeCurrent(Context* context) override;
 
-    Implementation& operator=(const Implementation&) = delete;
-    Implementation& operator=(Implementation&& other);
-
+    virtual bool doneCurrent(Context* context) override;
 
 private:
-    bool setPixelFormat();
-    bool createContext(CGLContextObj shared = nullptr);
-    void setExternal(CGLContextObj context, CGLPixelFormatObj pixelFormat);
+    bool setPixelFormat(Context* context, const ContextFormat& format);
 
-
-private:
-    CGLContextObj m_contextHandle;
-    CGLPixelFormatObj m_pixelFormatHandle;
-    bool m_owning;
-    std::thread::id m_owningThread;
+    bool createContext(Context* context, CGLContextObj shared);
 };
 
     
