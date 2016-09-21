@@ -6,6 +6,7 @@
 
 
 namespace glheadless {
+namespace wgl {
 
 
 class Window {
@@ -13,15 +14,13 @@ public:
     Window();
     Window(HWND windowHandle, HDC deviceContextHandle);
     Window(const Window&) = delete;
-    Window(Window&& other);
+    Window(Window&& other) = delete;
     ~Window();
 
     HDC deviceContext() const;
 
-    void destroy();
-
     Window& operator=(const Window&) = delete;
-    Window& operator=(Window&& other);
+    Window& operator=(Window&& other) = delete;
 
 
 private:
@@ -29,13 +28,13 @@ private:
     public:
         WindowClass();
         WindowClass(const WindowClass&) = delete;
-        WindowClass(WindowClass&& other);
+        WindowClass(WindowClass&& other) = delete;
         ~WindowClass();
 
         LPCTSTR id() const;
 
         WindowClass& operator=(const WindowClass&) = delete;
-        WindowClass& operator=(WindowClass&& other);
+        WindowClass& operator=(WindowClass&& other) = delete;
 
 
     private:
@@ -56,5 +55,6 @@ private:
     static std::weak_ptr<WindowClass> s_windowClass;
 };
 
-    
+
+}  // namespace wgl;
 }  // namespace glheadless

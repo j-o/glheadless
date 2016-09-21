@@ -1,4 +1,4 @@
-#include "glheadless/ContextFactory.h"
+#include <glheadless/ContextFactory.h>
 
 #include "AbstractImplementation.h"
 
@@ -7,16 +7,19 @@ namespace glheadless {
 
 
 std::unique_ptr<Context> ContextFactory::getCurrent() {
-    return AbstractImplementation::instance()->getCurrent();
+    auto implementation = AbstractImplementation::create();
+    return implementation->getCurrent();
 }
 
 std::unique_ptr<Context> ContextFactory::create(const ContextFormat& format) {
-    return AbstractImplementation::instance()->create(format);
+    auto implementation = AbstractImplementation::create();
+    return implementation->create(format);
 }
 
 std::unique_ptr<Context> ContextFactory::create(const Context* shared, const ContextFormat& format) {
-    return AbstractImplementation::instance()->create(shared, format);
+    auto implementation = AbstractImplementation::create();
+    return implementation->create(shared, format);
 }
 
 
-}
+} // namespace glheadless

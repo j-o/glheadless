@@ -14,6 +14,7 @@
 
 
 namespace glheadless {
+namespace wgl {
 
 
 namespace {
@@ -42,7 +43,7 @@ private:
 
 
 std::atomic<Platform*> g_platformInstance;
-std::mutex g_platformInstanceMutex;
+std::mutex g_instanceMutex;
 
 
 }  // unnamed namespace
@@ -53,7 +54,7 @@ Platform* Platform::instance() {
     auto tmp = g_platformInstance.load(std::memory_order_relaxed);
     std::atomic_thread_fence(std::memory_order_acquire);
     if (tmp == nullptr) {
-        std::lock_guard<std::mutex> lock(g_platformInstanceMutex);
+        std::lock_guard<std::mutex> lock(g_instanceMutex);
         tmp = g_platformInstance.load(std::memory_order_relaxed);
         if (tmp == nullptr) {
             tmp = new Platform();
@@ -128,4 +129,5 @@ Platform::~Platform() {
 }
 
 
+}  // namespace wgl
 }  // namespace glheadless

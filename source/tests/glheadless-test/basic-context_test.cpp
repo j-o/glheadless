@@ -12,6 +12,8 @@
 #include <glheadless/context.h>
 #include <glheadless/ContextFactory.h>
 
+#include "AbstractImplementation.h"
+
 
 using namespace glheadless;
 
@@ -35,6 +37,17 @@ TEST_F(BasicContext_Test, Create32) {
 TEST_F(BasicContext_Test, CreateDefault) {
     auto context = ContextFactory::create();
     EXPECT_TRUE(context->valid());
+    EXPECT_FALSE(context->lastErrorCode());
+}
+
+
+TEST_F(BasicContext_Test, Destroy) {
+    auto context = ContextFactory::create();
+    ASSERT_TRUE(context->valid());
+    ASSERT_FALSE(context->lastErrorCode());
+
+    context->implementation()->destroy();
+    EXPECT_FALSE(context->valid());
     EXPECT_FALSE(context->lastErrorCode());
 }
 

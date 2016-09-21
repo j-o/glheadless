@@ -6,13 +6,10 @@
  */
 
 
-#include <glheadless/glheadless_api.h>
-
 #include <memory>
-#include <system_error>
 #include <thread>
-#include <map>
 
+#include <glheadless/glheadless_api.h>
 #include <glheadless/error.h>
 #include <glheadless/ExceptionTrigger.h>
 
@@ -23,17 +20,19 @@
 namespace glheadless {
 
 
-struct State;
+/*!
+ * \brief Opaque base class for platform-depedent implementations.
+ */
+class AbstractImplementation;
 
 
 /*!
  * \brief Platform-independent headless OpenGL context representation.
  *
  * This class is a common abstraction for different context creation implementations based on various OS-specific APIs.
- * Currently supported: WGL (Windows), CGL (Mac OS X)
+ * Currently supported: WGL (Windows), CGL (Mac OS X), GLX (Linux), EGL (Linux)
  *
- * To set up an OpenGL context, instantiate a Context object, configure its pixel format, version, profile and debug
- * context (or use the defaults) and then call create().
+ * To set up an OpenGL context, configure a ContextFormat (or use the default) and call ContextFactory::create()
  *
  * \snippet basic-context/main.cpp Creating a context
  *
@@ -46,9 +45,12 @@ struct State;
  */
 class GLHEADLESS_API Context {
 public:
-    Context(State* state);
+    /*!
+     * \brief Do not call directly, use ContextFactory::create() instead.
+     */
+    explicit Context(AbstractImplementation* implementation);
     Context(const Context&) = delete;
-    Context(Context&& other);
+    Context(Context&& other) = delete;
     ~Context();
 
     /*!
@@ -75,11 +77,26 @@ public:
      * If the context is not valid, use lastErrorCode() and lastErrorMessage() to check for any error that occured
      * during context creation.
      *
-     * \return true if the context is ready to use
+     * \return true if the context is ready to use.
      */
     bool valid() const;
 
+    /*!
+     * \brief For internal use.
+     *
+     * Sets lastErrorCode and lastErrorMessage and triggers exception, if enabled.
+     *
+     * \return false, if code identifies an error.
+     */
     bool setError(Error code, const std::string& message, ExceptionTrigger exceptionTrigger);
+
+    /*!
+    * \brief For internal use.
+    *
+    * Sets lastErrorCode and lastErrorMessage and triggers exception, if enabled.
+    *
+    * \return false, if code identifies an error.
+    */
     bool setError(const std::error_code& code, const std::string& message, ExceptionTrigger exceptionTrigger);
 
     /*!
@@ -93,7 +110,7 @@ public:
     const std::string& lastErrorMessage() const;
 
     /*!
-     * \return the enabled ::glheadless::ExceptionTrigger mask
+     * \return the enabled glheadless::ExceptionTrigger mask.
      */
     ExceptionTrigger exceptionTriggers() const;
 
@@ -104,20 +121,27 @@ public:
      */
     void setExceptionTriggers(ExceptionTrigger exceptions);
 
-    State* state();
+    /*!
+     * \return the platform-dependent implementation (opaque).
+     */
+    AbstractImplementation* implementation();
 
-    const State* state() const;
+    /*!
+    * \return the platform-dependent implementation (opaque).
+    */
+    const AbstractImplementation* implementation() const;
 
     Context& operator=(const Context&) = delete;
-    Context& operator=(Context&& other);
+    Context& operator=(Context&& other) = delete;
 
 
 private:
-    State* m_state;
+    std::unique_ptr<AbstractImplementation> m_implementation; //!< platform-dependent implementation
+    std::thread::id                         m_owningThread;   //!< id of the thread that created this context
 
-    ExceptionTrigger m_exceptionTriggers;
-    std::error_code m_lastErrorCode;
-    std::string m_lastErrorMessage;
+    ExceptionTrigger m_exceptionTriggers; //!< enabled exception trigger mask
+    std::error_code  m_lastErrorCode;     //!< last error code that occured, default: 0 (success)
+    std::string      m_lastErrorMessage;  //!< detailed message of the last error, default: empty
 };
 
     

@@ -1,15 +1,14 @@
 #pragma  once
 
-/*!
- * \file AbstractImplementation.h
- */
+#include <functional>
+#include <unordered_map>
+#include <memory>
 
-
-#include <system_error>
-#include <string>
-
-#include <glheadless/error.h>
 #include <glheadless/Context.h>
+
+
+#define GLHEADLESS_REGISTER_IMPLEMENTATION(api, clazz) \
+namespace { static const auto _registered = AbstractImplementation::registerImplementation(#api, [] { return new clazz(); }); }
 
 
 namespace glheadless {
@@ -18,34 +17,38 @@ namespace glheadless {
 struct ContextFormat;
 
 
-/*!
- * \brief Non-polymorphic base class for context implemetations.
- *
- * Implements handling of errors and ExceptionTriggers. Platform implementations are not required to inherit this class,
- * in which case they must provide the public methods (lastErrorCode() and lastErrorMessage()) themselves.
- */
 class AbstractImplementation {
 public:
-    static AbstractImplementation* instance();
+    static AbstractImplementation* create();
+
+    using ImplementationFactory = std::function<AbstractImplementation*()>;
+    static bool registerImplementation(const std::string& name, const ImplementationFactory& factory);
 
 
 public:
+    AbstractImplementation();
+    virtual ~AbstractImplementation();
+
     virtual std::unique_ptr<Context> getCurrent() = 0;
 
     virtual std::unique_ptr<Context> create(const ContextFormat& format) = 0;
     virtual std::unique_ptr<Context> create(const Context* shared, const ContextFormat& format) = 0;
 
-    virtual bool destroy(Context* context) = 0;
+    virtual bool destroy() = 0;
 
-    virtual bool valid(const Context* context) = 0;
+    virtual bool valid() = 0;
 
-    virtual bool makeCurrent(Context* context) = 0;
-    virtual bool doneCurrent(Context* context) = 0;
+    virtual bool makeCurrent() = 0;
+    virtual bool doneCurrent() = 0;
 
 
 protected:
-    AbstractImplementation();
-    virtual ~AbstractImplementation() = default;
+    Context* m_context;
+
+
+private:
+    static std::unordered_map<std::string, ImplementationFactory> s_implementationFactories;
 };
+
 
 }  // namespace glheadless

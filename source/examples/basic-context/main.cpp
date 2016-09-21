@@ -24,18 +24,18 @@ int main(int /*argc*/, char* /*argv*/[]) {
 
 
     //! [Checking for errors]
-    if (!context.valid()) {
-        std::cerr << context.lastErrorMessage() << ": " << context.lastErrorCode().message() << " (" << context.lastErrorCode() << ")" << std::endl;
+    if (!context->valid()) {
+        std::cerr << context->lastErrorMessage() << ": " << context->lastErrorCode().message() << " (" << context->lastErrorCode() << ")" << std::endl;
         return EXIT_FAILURE;
     }
     //! [Checking for errors]
 
-    context.makeCurrent();
+    context->makeCurrent();
 
     const auto versionString = reinterpret_cast<const char*>(glGetString(GL_VERSION));
     std::cout << "Created context with version " << versionString << std::endl;
 
-    context.doneCurrent();
+    context->doneCurrent();
 
     return EXIT_SUCCESS;
 }

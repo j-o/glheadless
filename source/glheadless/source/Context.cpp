@@ -8,35 +8,32 @@
 namespace glheadless {
 
 
-Context::Context(State* state)
-: m_state(state)
-, m_exceptionTriggers(ExceptionTrigger::NONE) {
-    assert(state);
-}
-
-
-Context::Context(Context&& other) {
-    *this = std::move(other);
+Context::Context(AbstractImplementation* implementation)
+: m_implementation(implementation)
+, m_exceptionTriggers(ExceptionTrigger::NONE)
+, m_owningThread(std::this_thread::get_id()) {
+    assert(implementation);
 }
 
 
 Context::~Context() {
-    AbstractImplementation::instance()->destroy(this);
+    assert(m_owningThread == std::this_thread::get_id() && "a context must be destroyed on the same thread that created it");
+    m_implementation->destroy();
 }
 
 
 bool Context::makeCurrent() {
-    return AbstractImplementation::instance()->makeCurrent(this);
+    return m_implementation->makeCurrent();
 }
 
 
 bool Context::doneCurrent() {
-    return AbstractImplementation::instance()->doneCurrent(this);
+    return m_implementation->doneCurrent();
 }
 
 
 bool Context::valid() const {
-    return AbstractImplementation::instance()->valid(this);
+    return m_implementation->valid();
 }
 
 
@@ -77,26 +74,13 @@ void Context::setExceptionTriggers(ExceptionTrigger exceptions) {
 }
 
 
-State* Context::state() {
-    return m_state;
+AbstractImplementation* Context::implementation() {
+    return m_implementation.get();
 }
 
 
-const State* Context::state() const {
-    return m_state;
-}
-
-
-Context& Context::operator=(Context&& other) {
-    m_state = other.m_state;
-    m_state = nullptr;
-
-    m_exceptionTriggers = other.m_exceptionTriggers;
-
-    m_lastErrorCode = std::move(other.m_lastErrorCode);
-    m_lastErrorMessage = std::move(other.m_lastErrorMessage);
-
-    return *this;
+const AbstractImplementation* Context::implementation() const {
+    return m_implementation.get();
 }
 
 

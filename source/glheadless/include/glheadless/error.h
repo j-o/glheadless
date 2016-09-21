@@ -2,13 +2,14 @@
 
 /*!
  * \file error.h
- * \brief Declares custom error codes for use with std::error_code.
+ * \brief Declares custom error codes for use with std::error_code and std::error_condition.
  */
 
-#include <glheadless/glheadless_api.h>
 
 #include <system_error>
 #include <string>
+
+#include <glheadless/glheadless_api.h>
 
 
 namespace glheadless {
@@ -18,9 +19,8 @@ namespace glheadless {
  * \brief Error codes that may originate from the glheadless library itself.
  */
 enum class Error : int {
-    INVALID_THREAD_ACCESS = 1,  //!< A function was called on an object from a thread that does not own the object
-    INVALID_CONTEXT,            //!< A context handle is invalid
-    INVALID_CONFIGURATION       //!< The selected configuration is invalid or unsupported
+    INVALID_CONTEXT = 1,  //!< A context handle is invalid
+    INVALID_CONFIGURATION //!< The selected configuration is invalid or unsupported
 };
 
 

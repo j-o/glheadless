@@ -14,6 +14,7 @@
 
 
 namespace glheadless {
+namespace wgl {
 
 
 std::weak_ptr<Window::WindowClass> Window::s_windowClass;
@@ -54,11 +55,6 @@ Window::WindowClass::WindowClass()
 }
 
 
-Window::WindowClass::WindowClass(WindowClass&& other) {
-    *this = std::move(other);
-}
-
-
 Window::WindowClass::~WindowClass() {
     if (m_id != 0) {
         const auto success = UnregisterClass(id(), m_instanceHandle);
@@ -69,15 +65,6 @@ Window::WindowClass::~WindowClass() {
 
 LPCTSTR Window::WindowClass::id() const {
     return reinterpret_cast<LPCTSTR>(m_id);
-}
-
-
-Window::WindowClass& Window::WindowClass::operator=(WindowClass&& other) {
-    m_instanceHandle = other.m_instanceHandle;
-    m_id = other.m_id;
-    other.m_id = 0;
-
-    return *this;
 }
 
 
@@ -130,26 +117,7 @@ Window::Window(HWND windowHandle, HDC deviceContextHandle)
 }
 
 
-Window::Window(Window&& other) {
-    *this = std::move(other);
-}
-
-
 Window::~Window() {
-    try {
-        destroy();
-    } catch (...) {
-        assert(false && "failed to destroy window");
-    }
-}
-
-
-HDC Window::deviceContext() const {
-    return m_deviceContextHandle;
-}
-
-
-void Window::destroy() {
     if (m_owning) {
         if (m_deviceContextHandle != nullptr) {
             ReleaseDC(m_windowHandle, m_deviceContextHandle);
@@ -157,26 +125,15 @@ void Window::destroy() {
         }
         if (m_windowHandle != nullptr) {
             const auto success = DestroyWindow(m_windowHandle);
-            if (!success) {
-                throw InternalException(Error::INVALID_CONTEXT, "DestroyWindow failed", ExceptionTrigger::CREATE);
-            }
+            assert(success && "DestroyWindow failed");
             m_windowHandle = nullptr;
         }
     }
 }
 
 
-Window& Window::operator=(Window&& other) {
-    m_windowHandle = other.m_windowHandle;
-    other.m_windowHandle = nullptr;
-
-    m_deviceContextHandle = other.m_deviceContextHandle;
-    other.m_deviceContextHandle = nullptr;
-
-    m_windowClass = std::move(other.m_windowClass);
-    m_owning = other.m_owning;
-
-    return *this;
+HDC Window::deviceContext() const {
+    return m_deviceContextHandle;
 }
 
 
@@ -193,4 +150,5 @@ std::shared_ptr<Window::WindowClass> Window::getWindowClass() {
 }
 
 
+}  // namespace wgl
 }  // namespace glheadless

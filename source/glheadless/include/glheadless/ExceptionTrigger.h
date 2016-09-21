@@ -19,9 +19,9 @@ namespace glheadless {
  * \see Context::setExceptionTriggers().
  */
 enum class ExceptionTrigger : unsigned int {
-    NONE           = 0x0, ///< No exceptions will be thrown.
-    CREATE         = 0x1, ///< Errors during context creation will raise an exception
-    CHANGE_CURRENT = 0x2  ///< Errors during a context switch (makeCurrent/doneCurrent) will raise an exception
+    NONE           = 0x0, //!< No exceptions will be thrown.
+    CREATE         = 0x1, //!< Errors during context creation will raise an exception
+    CHANGE_CURRENT = 0x2  //!< Errors during a context switch (makeCurrent/doneCurrent) will raise an exception
 };
 
 

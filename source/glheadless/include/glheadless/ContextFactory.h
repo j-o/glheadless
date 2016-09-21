@@ -1,9 +1,15 @@
 #pragma once
 
-#include <glheadless/glheadless_api.h>
+/*!
+ * \file ContextFactory.h
+ * \brief Declares class ContextFactory.
+ */
 
-#include <glheadless/ContextFormat.h>
+
 #include <memory>
+
+#include <glheadless/glheadless_api.h>
+#include <glheadless/ContextFormat.h>
 
 
 namespace glheadless {
@@ -12,6 +18,13 @@ namespace glheadless {
 class Context;
 
 
+/*!
+ * \brief Factory that creates Contexts.
+ *
+ * Use this class to obtain an instance of Context.
+ *
+ * \see Context
+ */
 class GLHEADLESS_API ContextFactory {
 public:
     /*!
@@ -34,8 +47,20 @@ public:
 
     /*!
      * \brief Creates a context with the specified format.
+     *
+     * \exception std::system_error if any error occurs and exception ExceptionTrigger::CREATE is enabled.
+     *
+     * \return the new Context.
      */
     static std::unique_ptr<Context> create(const ContextFormat& format = ContextFormat());
+
+    /*!
+    * \brief Creates a shared context with the specified format.
+    *
+    * \exception std::system_error if any error occurs and exception ExceptionTrigger::CREATE is enabled.
+    *
+    * \return the new Context.
+    */
     static std::unique_ptr<Context> create(const Context* shared, const ContextFormat& format = ContextFormat());
 };
 

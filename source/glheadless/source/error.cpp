@@ -11,7 +11,6 @@ namespace {
 
 
 const auto k_errorMessages = std::map<Error, std::string>{
-    { Error::INVALID_THREAD_ACCESS, "invalid thread access" },
     { Error::INVALID_CONFIGURATION, "invalid configuration" },
     { Error::INVALID_CONTEXT, "invalid context" }
 };

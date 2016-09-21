@@ -64,6 +64,7 @@ set(sources
 
 if(WIN32)
     set(sources ${sources}
+        ${source_path}/wgl/wglext.h
         ${source_path}/wgl/Implementation.h
         ${source_path}/wgl/Implementation.cpp
         ${source_path}/wgl/Platform.h

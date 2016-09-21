@@ -1,7 +1,5 @@
 #pragma once
 
-#include <string>
-
 #include <Windows.h>
 
 #include <gl/GL.h>
@@ -9,12 +7,8 @@
 #include "wglext.h"
 
 
-namespace std {
-class error_code;
-}  // namespace std
-
-
 namespace glheadless {
+namespace wgl {
 
 
 class Platform {
@@ -32,5 +26,6 @@ private:
     ~Platform();
 };
 
-    
+
+}  // namespace wgl
 }  // namespace glheadless
