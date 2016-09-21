@@ -10,8 +10,8 @@ namespace glheadless {
 
 Context::Context(AbstractImplementation* implementation)
 : m_implementation(implementation)
-, m_exceptionTriggers(ExceptionTrigger::NONE)
-, m_owningThread(std::this_thread::get_id()) {
+, m_owningThread(std::this_thread::get_id())
+, m_exceptionTriggers(ExceptionTrigger::NONE) {
     assert(implementation);
 }
 

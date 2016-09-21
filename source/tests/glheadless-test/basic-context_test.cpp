@@ -9,7 +9,7 @@
 
 #include <gmock/gmock.h>
 
-#include <glheadless/context.h>
+#include <glheadless/Context.h>
 #include <glheadless/ContextFactory.h>
 
 #include "AbstractImplementation.h"

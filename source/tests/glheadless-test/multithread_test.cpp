@@ -46,9 +46,15 @@ TEST_F(Multithread_Test, MakeCurrent) {
 
 
 TEST_F(Multithread_DeathTest, InvalidThreadAccess) {
-    EXPECT_DEATH({
+#if defined(_WIN32)
+    auto message = "Assertion failed: m_owningThread == std::this_thread::get_id\\(\\) && \"a context must be destroyed on the same thread that created it\".*";
+#elif defined(__APPLE__)
+#elif defined(__linux__)
+    auto message = "glheadless::Context::~Context\\(\\): Assertion `m_owningThread == std::this_thread::get_id\\(\\) && \"a context must be destroyed on the same thread that created it\"' failed.";
+#endif
+    EXPECT_DEBUG_DEATH({
         auto ret = std::async(std::launch::async, [] { return ContextFactory::create(); });
         auto context = ret.get();
         context = nullptr;
-    }, "Assertion failed: m_owningThread == std::this_thread::get_id\\(\\) && \"a context must be destroyed on the same thread that created it\".*");
+    }, message);
 }

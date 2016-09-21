@@ -1,11 +1,10 @@
 #pragma once
 
-#include <string>
-
 #include <EGL/egl.h>
 
 
 namespace glheadless {
+namespace egl {
 
 
 class Platform {
@@ -29,4 +28,5 @@ private:
 };
 
 
+}  // namespace egl
 }  // namespace glheadless

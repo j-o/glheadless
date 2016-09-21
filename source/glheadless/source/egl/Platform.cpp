@@ -2,7 +2,6 @@
 
 #include <atomic>
 #include <mutex>
-#include <map>
 
 #include <glheadless/ExceptionTrigger.h>
 #include <glheadless/error.h>
@@ -11,6 +10,7 @@
 
 
 namespace glheadless {
+namespace egl {
 
 
 namespace {
@@ -28,7 +28,7 @@ Platform* Platform::instance() {
     auto tmp = g_platformInstance.load(std::memory_order_relaxed);
     std::atomic_thread_fence(std::memory_order_acquire);
     if (tmp == nullptr) {
-        std::lock_guard<std::mutex> lock(g_platformInstanceMutex);
+        std::lock_guard<std::mutex> __attribute__((unused)) lock(g_platformInstanceMutex);
         tmp = g_platformInstance.load(std::memory_order_relaxed);
         if (tmp == nullptr) {
             tmp = new Platform();
@@ -74,4 +74,5 @@ bool Platform::version15() const {
 }
 
 
+}  // namespace egl
 }  // namespace glheadless

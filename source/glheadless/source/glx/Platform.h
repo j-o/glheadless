@@ -7,6 +7,7 @@
 
 
 namespace glheadless {
+namespace glx {
 
 
 class Platform {
@@ -24,6 +25,7 @@ public:
 
 private:
     Platform();
+
     ~Platform();
 
 
@@ -32,4 +34,5 @@ private:
 };
 
 
+}  // namespace glx
 }  // namespace glheadless

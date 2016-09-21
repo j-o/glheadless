@@ -2,32 +2,38 @@
 
 #include <cassert>
 #include <vector>
+#include <map>
 
-#include "Platform.h"
+#include <glheadless/ContextFormat.h>
+
 #include "../InternalException.h"
 
-#include <EGL/egl.h>
+#include "Platform.h"
 
 
 namespace glheadless {
+namespace glx {
+
+
+GLHEADLESS_REGISTER_IMPLEMENTATION(GLX, Implementation)
 
 
 namespace {
 
 
-std::vector<int> createContextAttributeList(const Context& context) {
+std::vector<int> createContextAttributeList(const ContextFormat& format) {
     std::map<int, int> attributes;
 
-    if (context.version().first > 0) {
-        attributes[GLX_CONTEXT_MAJOR_VERSION_ARB] = context.version().first;
-        attributes[GLX_CONTEXT_MINOR_VERSION_ARB] = context.version().second;
+    if (format.versionMajor > 0) {
+        attributes[GLX_CONTEXT_MAJOR_VERSION_ARB] = format.versionMajor;
+        attributes[GLX_CONTEXT_MINOR_VERSION_ARB] = format.versionMinor;
     }
 
-    if (context.debugContext()) {
+    if (format.debug) {
         attributes[GLX_CONTEXT_FLAGS_ARB] = GLX_CONTEXT_DEBUG_BIT_ARB;
     }
 
-    switch (context.profile()) {
+    switch (format.profile) {
         case ContextProfile::CORE:
             attributes[GLX_CONTEXT_PROFILE_MASK_ARB] = GLX_CONTEXT_CORE_PROFILE_BIT_ARB;
             break;
@@ -36,10 +42,6 @@ std::vector<int> createContextAttributeList(const Context& context) {
             break;
         default:
             break;
-    }
-
-    for (const auto& attribute : context.attributes()) {
-        attributes[attribute.first] = attribute.second;
     }
 
 
@@ -109,25 +111,29 @@ XErrorHandler::XErrorHandler()
     m_oldHandler = XSetErrorHandler(XErrorHandler::errorHandler);
 }
 
+
 XErrorHandler::~XErrorHandler() {
     s_activeHandler = nullptr;
     XSetErrorHandler(m_oldHandler);
 }
 
+
 int XErrorHandler::errorCode() const {
     return m_errorCode;
 }
 
+
 const std::string &XErrorHandler::errorString() const {
     return m_errorString;
 }
+
 
 int XErrorHandler::errorHandler(Display* display, XErrorEvent* errorEvent) {
     char buffer[1024];
     XGetErrorText(display, errorEvent->error_code, buffer, 1024);
 
     s_activeHandler->m_errorCode = errorEvent->error_code;
-    s_activeHandler->m_errorString = buffer;
+    s_activeHandler->m_errorString = std::string(buffer);
 
     return 0;
 }
@@ -136,89 +142,69 @@ int XErrorHandler::errorHandler(Display* display, XErrorEvent* errorEvent) {
 }  // unnamed namespace
 
 
-Context Implementation::currentContext() {
-    Context context;
-
-    const auto contextHandle = glXGetCurrentContext();
-    if (contextHandle == nullptr) {
-        context.implementation()->setError(Error::INVALID_CONTEXT, "glXGetCurrentContext returned nullptr", ExceptionTrigger::CREATE);
-        return context;
-    }
-
-    const auto drawable = glXGetCurrentDrawable();
-    if (drawable == 0) {
-        context.implementation()->setError(Error::INVALID_CONTEXT, "glXGetCurrentDrawable returned nullptr", ExceptionTrigger::CREATE);
-        return context;
-    }
-
-    context.implementation()->setExternal(drawable, contextHandle);
-
-    return std::move(context);
-}
-
-
-Implementation::Implementation(Context* context)
-: AbstractImplementation(context)
-, m_contextHandle(nullptr)
-, m_drawable(0)
+Implementation::Implementation()
+: m_drawable(0)
 , m_pBuffer(0)
+, m_contextHandle(nullptr)
 , m_owning(true) {
 }
 
 
-Implementation::Implementation(Implementation&& other)
-: AbstractImplementation(std::forward<AbstractImplementation>(other))
-, m_contextHandle(other.m_contextHandle)
-, m_drawable(other.m_drawable)
-, m_pBuffer(other.m_pBuffer)
-, m_owning(other.m_owning)
-, m_owningThread(other.m_owningThread) {
-    other.m_contextHandle = nullptr;
-    other.m_drawable = 0;
-    other.m_pBuffer = 0;
-}
-
-
 Implementation::~Implementation() {
-    try {
-        destroy();
-    } catch (...) {
-        assert(false && "failed to destroy context");
-    }
 }
 
 
-bool Implementation::create() {
-    m_owningThread = std::this_thread::get_id();
+std::unique_ptr<Context> Implementation::getCurrent() {
+    auto context = std::make_unique<Context>(this);
+    m_context = context.get();
+    m_owning = false;
 
-    try {
-        createContext();
-    } catch (InternalException& e) {
-        return setError(e.code(), e.message(), e.trigger());
+    m_contextHandle = glXGetCurrentContext();
+    if (m_contextHandle == nullptr) {
+        context->setError(Error::INVALID_CONTEXT, "glXGetCurrentContext returned nullptr", ExceptionTrigger::CREATE);
+        return context;
     }
 
-    return true;
+    m_drawable = glXGetCurrentDrawable();
+    if (m_drawable == 0) {
+        context->setError(Error::INVALID_CONTEXT, "glXGetCurrentDrawable returned nullptr", ExceptionTrigger::CREATE);
+        return context;
+    }
+
+    return context;
 }
 
 
-bool Implementation::create(const Context* shared) {
-    m_owningThread = std::this_thread::get_id();
+std::unique_ptr<Context> Implementation::create(const ContextFormat& format) {
+    auto context = std::make_unique<Context>(this);
+    m_context = context.get();
 
     try {
-        createContext(shared->implementation()->m_contextHandle);
+        createContext(nullptr, format);
     } catch (InternalException& e) {
-        return setError(e.code(), e.message(), e.trigger());
+        m_context->setError(e.code(), e.message(), e.trigger());
     }
 
-    return true;
+    return context;
+}
+
+
+std::unique_ptr<Context> Implementation::create(const Context* shared, const ContextFormat& format) {
+    auto sharedImplementation = static_cast<const Implementation*>(shared->implementation());
+    auto context = std::make_unique<Context>(this);
+    m_context = context.get();
+
+    try {
+        createContext(sharedImplementation->m_contextHandle, format);
+    } catch (InternalException& e) {
+        m_context->setError(e.code(), e.message(), e.trigger());
+    }
+
+    return context;
 }
 
 
 bool Implementation::destroy() {
-    if (m_owningThread != std::thread::id() && m_owningThread != std::this_thread::get_id()) {
-        return setError(Error::INVALID_THREAD_ACCESS, "A context must be destroyed on the same thread that created it", ExceptionTrigger::CREATE);
-    }
-
     if (m_owning) {
         XErrorHandler xErrorHandler;
 
@@ -228,16 +214,12 @@ bool Implementation::destroy() {
                 doneCurrent();
             }
             glXDestroyContext(Platform::instance()->display(), m_contextHandle);
-            if (xErrorHandler.errorCode() != Success) {
-                return setError(Error::INVALID_CONTEXT, "glXDestroyContext failed (" + xErrorHandler.errorString() + ")", ExceptionTrigger::CREATE);
-            }
+            assert(xErrorHandler.errorCode() == Success && "glXDestroyContext failed");
         };
 
         if (m_pBuffer != 0) {
             glXDestroyPbuffer(Platform::instance()->display(), m_pBuffer);
-            if (xErrorHandler.errorCode() != Success) {
-                return setError(Error::INVALID_CONTEXT, "glXDestroyPbuffer failed (" + xErrorHandler.errorString() + ")", ExceptionTrigger::CREATE);
-            }
+            assert(xErrorHandler.errorCode() == Success && "glXDestroyPbuffer failed");
         }
     }
 
@@ -245,57 +227,39 @@ bool Implementation::destroy() {
     m_pBuffer = 0;
     m_drawable = 0;
 
-    m_owningThread = std::thread::id();
-    m_owning = true;
-
     return true;
 }
 
 
-bool Implementation::makeCurrent() noexcept {
+bool Implementation::valid() {
+    return m_contextHandle != nullptr
+        && m_drawable != 0;
+}
+
+
+bool Implementation::makeCurrent() {
     XErrorHandler xErrorHandler;
 
     const auto success = glXMakeContextCurrent(Platform::instance()->display(), m_drawable, m_drawable, m_contextHandle);
     if (!success) {
-        return setError(Error::INVALID_CONTEXT, "glXMakeContextCurrent failed (" + xErrorHandler.errorString() + ")", ExceptionTrigger::CHANGE_CURRENT);
+        return m_context->setError(Error::INVALID_CONTEXT, "glXMakeContextCurrent failed (" + xErrorHandler.errorString() + ")", ExceptionTrigger::CHANGE_CURRENT);
     }
     return true;
 }
 
 
-bool Implementation::doneCurrent() noexcept {
+bool Implementation::doneCurrent() {
     XErrorHandler xErrorHandler;
 
     const auto success = glXMakeContextCurrent(Platform::instance()->display(), None, None, nullptr);
     if (!success) {
-        return setError(Error::INVALID_CONTEXT, "glXMakeContextCurrent with nullptr failed (" + xErrorHandler.errorString() + ")", ExceptionTrigger::CHANGE_CURRENT);
+        return m_context->setError(Error::INVALID_CONTEXT, "glXMakeContextCurrent with nullptr failed (" + xErrorHandler.errorString() + ")", ExceptionTrigger::CHANGE_CURRENT);
     }
     return true;
 }
 
 
-bool Implementation::valid() const {
-    return !lastErrorCode()
-        && m_contextHandle != nullptr;
-}
-
-
-Implementation& Implementation::operator=(Implementation&& other) {
-    m_contextHandle = other.m_contextHandle;
-    m_drawable = other.m_drawable;
-    m_pBuffer = other.m_pBuffer;
-    m_owning = other.m_owning;
-    m_owningThread = other.m_owningThread;
-
-    other.m_contextHandle = nullptr;
-    other.m_drawable = 0;
-    other.m_pBuffer = 0;
-
-    return *this;
-}
-
-
-void Implementation::createContext(GLXContext shared) {
+void Implementation::createContext(GLXContext shared, const ContextFormat& format) {
     // set custom error handler
     XErrorHandler xErrorHandler;
 
@@ -307,7 +271,7 @@ void Implementation::createContext(GLXContext shared) {
     // Select framebuffer configuration
     //
     int fbCount;
-    GLXFBConfig* fbConfig = glXChooseFBConfig(display, DefaultScreen(display), { None }, &fbCount);
+    GLXFBConfig* fbConfig = glXChooseFBConfig(display, DefaultScreen(display), nullptr, &fbCount);
     if (fbConfig == nullptr) {
         throw InternalException(Error::INVALID_CONFIGURATION, "glXChooseFBConfig returned nullptr", ExceptionTrigger::CREATE);
     }
@@ -317,7 +281,7 @@ void Implementation::createContext(GLXContext shared) {
     //
     // Create context
     //
-    const auto contextAttributes = createContextAttributeList(*m_context);
+    const auto contextAttributes = createContextAttributeList(format);
     m_contextHandle = Platform::instance()->glXCreateContextAttribsARB(display, fbConfig[0], shared, True, contextAttributes.data());
     XSync(display, false);
     if (m_contextHandle == nullptr || xErrorHandler.errorCode() != Success) {
@@ -342,11 +306,6 @@ void Implementation::createContext(GLXContext shared) {
     }
 }
 
-void Implementation::setExternal(GLXDrawable drawable, GLXContext contextHandle) {
-    m_drawable = drawable;
-    m_contextHandle = contextHandle;
-    m_owning = false;
-}
 
-
+}  // namespace glx
 }  // namespace glheadless

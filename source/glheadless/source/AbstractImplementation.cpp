@@ -11,7 +11,7 @@ std::unordered_map<std::string, AbstractImplementation::ImplementationFactory> A
 
 AbstractImplementation* AbstractImplementation::create() {
     auto itr = s_implementationFactories.begin();
-    assert(itr != s_implementationFactories.end());
+    assert(itr != s_implementationFactories.end() && "No implementation found");
     return itr->second();
 }
 
