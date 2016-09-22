@@ -5,7 +5,6 @@
 #include <atomic>
 #include <codecvt>
 
-#include <glheadless/ExceptionTrigger.h> 
 #include <glheadless/error.h>
 
 #include "../InternalException.h"
@@ -26,7 +25,7 @@ public:
 
 public:
     explicit EnsureAtExit(const Callback& callback)
-        : m_callback(callback) {
+    : m_callback(callback) {
     }
     ~EnsureAtExit() {
         if (m_callback != nullptr) {
@@ -85,12 +84,12 @@ Platform::Platform()
 
     const auto pixelFormat = ChoosePixelFormat(window.deviceContext(), &pixelFormatDesc);
     if (pixelFormat == 0) {
-        throw InternalException(Error::INVALID_CONFIGURATION, "ChoosePixelFormat failed on temporary context", ExceptionTrigger::CREATE);
+        throw InternalException(Error::INVALID_CONFIGURATION, "ChoosePixelFormat failed on temporary context");
     }
 
     auto success = SetPixelFormat(window.deviceContext(), pixelFormat, &pixelFormatDesc);
     if (!success) {
-        throw InternalException(Error::INVALID_CONFIGURATION, "SetPixelFormat failed on temporary context", ExceptionTrigger::CREATE);
+        throw InternalException(Error::INVALID_CONFIGURATION, "SetPixelFormat failed on temporary context");
     }
 
 
@@ -99,13 +98,13 @@ Platform::Platform()
     //
     const auto dummyContext = wglCreateContext(window.deviceContext());
     if (dummyContext == nullptr) {
-        throw InternalException(Error::INVALID_CONFIGURATION, "wglCreateContext failed on temporary context", ExceptionTrigger::CREATE);
+        throw InternalException(Error::INVALID_CONFIGURATION, "wglCreateContext failed on temporary context");
     }
     EnsureAtExit wglDeleteContextAtExit([dummyContext] { wglDeleteContext(dummyContext); });
 
     success = wglMakeCurrent(window.deviceContext(), dummyContext);
     if (!success) {
-        throw InternalException(Error::INVALID_CONFIGURATION, "wglMakeCurrent failed on temporary context", ExceptionTrigger::CREATE);
+        throw InternalException(Error::INVALID_CONFIGURATION, "wglMakeCurrent failed on temporary context");
     }
     EnsureAtExit wglDoneCurrentAtExit([] { wglMakeCurrent(nullptr, nullptr); });
 
@@ -115,12 +114,12 @@ Platform::Platform()
     //
     wglChoosePixelFormatARB = reinterpret_cast<PFNWGLCHOOSEPIXELFORMATARBPROC>(wglGetProcAddress("wglChoosePixelFormatARB"));
     if (wglChoosePixelFormatARB == nullptr) {
-        throw InternalException(Error::INVALID_CONFIGURATION, "wglGetProcAddress failed on wglChoosePixelFormatARB", ExceptionTrigger::CREATE);
+        throw InternalException(Error::INVALID_CONFIGURATION, "wglGetProcAddress failed on wglChoosePixelFormatARB");
     }
 
     wglCreateContextAttribsARB = reinterpret_cast<PFNWGLCREATECONTEXTATTRIBSARBPROC>(wglGetProcAddress("wglCreateContextAttribsARB"));
     if (wglCreateContextAttribsARB == nullptr) {
-        throw InternalException(Error::INVALID_CONFIGURATION, "wglGetProcAddress failed on wglCreateContextAttribsARB", ExceptionTrigger::CREATE);
+        throw InternalException(Error::INVALID_CONFIGURATION, "wglGetProcAddress failed on wglCreateContextAttribsARB");
     }
 }
 
