@@ -48,8 +48,6 @@ set(headers
     ${include_path}/ContextFactory.h
     ${include_path}/ContextFormat.h
     ${include_path}/error.h
-    ${include_path}/ExceptionTrigger.h
-    ${include_path}/ExceptionTrigger.hpp
 )
 
 set(sources

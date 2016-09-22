@@ -10,8 +10,7 @@ namespace glheadless {
 
 Context::Context(AbstractImplementation* implementation)
 : m_implementation(implementation)
-, m_owningThread(std::this_thread::get_id())
-, m_exceptionTriggers(ExceptionTrigger::NONE) {
+, m_owningThread(std::this_thread::get_id()) {
     assert(implementation);
 }
 
@@ -37,18 +36,14 @@ bool Context::valid() const {
 }
 
 
-bool Context::setError(Error code, const std::string& message, ExceptionTrigger exceptionTrigger) {
-    return setError(make_error_code(code), message, exceptionTrigger);
+bool Context::setError(Error code, const std::string& message) {
+    return setError(make_error_code(code), message);
 }
 
 
-bool Context::setError(const std::error_code& code, const std::string& message, ExceptionTrigger exceptionTrigger) {
+bool Context::setError(const std::error_code& code, const std::string& message) {
     m_lastErrorCode = code;
     m_lastErrorMessage = message;
-
-    if ((m_exceptionTriggers & exceptionTrigger) != ExceptionTrigger::NONE) {
-        throw std::system_error(m_lastErrorCode, m_lastErrorMessage);
-    }
 
     return !m_lastErrorCode;
 }
@@ -61,16 +56,6 @@ const std::error_code& Context::lastErrorCode() const {
 
 const std::string& Context::lastErrorMessage() const {
     return m_lastErrorMessage;
-}
-
-
-ExceptionTrigger Context::exceptionTriggers() const {
-    return m_exceptionTriggers;
-}
-
-
-void Context::setExceptionTriggers(ExceptionTrigger exceptions) {
-    m_exceptionTriggers = exceptions;
 }
 
 

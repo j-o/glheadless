@@ -111,7 +111,7 @@ std::unique_ptr<Context> Implementation::getCurrent() {
 
     m_contextHandle = CGLGetCurrentContext();
     if (m_contextHandle == nullptr) {
-        context->setError(Error::INVALID_CONTEXT, "CGLGetCurrentContext returned nullptr", ExceptionTrigger::CREATE);
+        context->setError(Error::INVALID_CONTEXT, "CGLGetCurrentContext returned nullptr");
         return context;
     }
 
@@ -127,7 +127,7 @@ std::unique_ptr<Context> Implementation::create(const ContextFormat& format) {
         setPixelFormat(format);
         createContext(nullptr);
     } catch (InternalException& e) {
-        context->setError(e.code(), e.message(), e.trigger());
+        context->setError(e.code(), e.message());
     }
 
     return context;
@@ -143,7 +143,7 @@ std::unique_ptr<Context> Implementation::create(const Context* shared, const Con
         setPixelFormat(format);
         createContext(sharedImplementation->m_contextHandle);
     } catch (InternalException& e) {
-        context->setError(e.code(), e.message(), e.trigger());
+        context->setError(e.code(), e.message());
     }
 
     return context;
@@ -175,7 +175,7 @@ bool Implementation::valid() {
 bool Implementation::makeCurrent() {
     const auto error = CGLSetCurrentContext(m_contextHandle);
     if (error != kCGLNoError) {
-        return m_context->setError(Error::INVALID_CONTEXT, "CGLSetCurrentContext failed", ExceptionTrigger::CHANGE_CURRENT);
+        return m_context->setError(Error::INVALID_CONTEXT, "CGLSetCurrentContext failed");
     }
     return true;
 }
@@ -184,7 +184,7 @@ bool Implementation::makeCurrent() {
 bool Implementation::doneCurrent() {
     const auto error = CGLSetCurrentContext(nullptr);
     if (error != kCGLNoError) {
-        return m_context->setError(Error::INVALID_CONTEXT, "CGLSetCurrentContext failed", ExceptionTrigger::CHANGE_CURRENT);
+        return m_context->setError(Error::INVALID_CONTEXT, "CGLSetCurrentContext failed");
     }
     return true;
 }
@@ -196,7 +196,7 @@ void Implementation::setPixelFormat(const ContextFormat& format) {
     GLint numVirtualScreens;
     const auto error = CGLChoosePixelFormat(pixelFormatAttributes.data(), &m_pixelFormatHandle, &numVirtualScreens);
     if (error != kCGLNoError) {
-        throw InternalException(Error::INVALID_CONFIGURATION, "CGLChoosePixelFormat failed", ExceptionTrigger::CREATE);
+        throw InternalException(Error::INVALID_CONFIGURATION, "CGLChoosePixelFormat failed");
     }
 }
 
@@ -204,7 +204,7 @@ void Implementation::setPixelFormat(const ContextFormat& format) {
 void Implementation::createContext(CGLContextObj shared) {
     const auto error = CGLCreateContext(m_pixelFormatHandle, shared, &m_contextHandle);
     if (error != kCGLNoError) {
-        throw InternalException(Error::INVALID_CONFIGURATION, "CGLCreateContext failed", ExceptionTrigger::CREATE);
+        throw InternalException(Error::INVALID_CONFIGURATION, "CGLCreateContext failed");
     }
 }
 

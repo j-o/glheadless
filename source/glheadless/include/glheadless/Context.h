@@ -11,7 +11,6 @@
 
 #include <glheadless/glheadless_api.h>
 #include <glheadless/error.h>
-#include <glheadless/ExceptionTrigger.h>
 
 
 /*!
@@ -88,7 +87,7 @@ public:
      *
      * \return false, if code identifies an error.
      */
-    bool setError(Error code, const std::string& message, ExceptionTrigger exceptionTrigger);
+    bool setError(Error code, const std::string& message);
 
     /*!
     * \brief For internal use.
@@ -97,7 +96,7 @@ public:
     *
     * \return false, if code identifies an error.
     */
-    bool setError(const std::error_code& code, const std::string& message, ExceptionTrigger exceptionTrigger);
+    bool setError(const std::error_code& code, const std::string& message);
 
     /*!
      * \return an std::error_code describing the last error.
@@ -108,18 +107,6 @@ public:
      * \return a detailed message describing the last error.
      */
     const std::string& lastErrorMessage() const;
-
-    /*!
-     * \return the enabled glheadless::ExceptionTrigger mask.
-     */
-    ExceptionTrigger exceptionTriggers() const;
-
-    /*!
-     * \brief Sets the enabled ExceptionTriggers.
-     *
-     * By default, no exceptions are thrown.
-     */
-    void setExceptionTriggers(ExceptionTrigger exceptions);
 
     /*!
      * \return the platform-dependent implementation (opaque).
@@ -139,7 +126,6 @@ private:
     std::unique_ptr<AbstractImplementation> m_implementation; //!< platform-dependent implementation
     std::thread::id                         m_owningThread;   //!< id of the thread that created this context
 
-    ExceptionTrigger m_exceptionTriggers; //!< enabled exception trigger mask
     std::error_code  m_lastErrorCode;     //!< last error code that occured, default: 0 (success)
     std::string      m_lastErrorMessage;  //!< detailed message of the last error, default: empty
 };
