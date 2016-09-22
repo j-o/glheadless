@@ -64,12 +64,14 @@ std::vector<_CGLPixelFormatAttribute> createPixelFormatAttributeList(const Conte
     attributes[kCGLPFAAccelerated] = GL_TRUE;
     attributes[kCGLPFAClosestPolicy] = GL_TRUE;
 
-    if (format.versionMajor >= 4) {
+    if (format.versionMajor == 4) {
         attributes[kCGLPFAOpenGLProfile] = kCGLOGLPVersion_GL4_Core;
-    } else if (format.versionMajor >= 3) {
+    } else if (format.versionMajor == 3) {
         attributes[kCGLPFAOpenGLProfile] = kCGLOGLPVersion_GL3_Core;
-    } else if (format.versionMajor > 0) {
+    } else if (format.versionMajor == 2 || format.versionMajor == 1 || format.versionMajor == 0) {
         attributes[kCGLPFAOpenGLProfile] = kCGLOGLPVersion_Legacy;
+    } else {
+        throw InternalException(Error::INVALID_CONFIGURATION, "Unsupported OpenGL version: " + std::to_string(format.versionMajor));
     }
 
     std::vector<_CGLPixelFormatAttribute> list;
@@ -173,10 +175,15 @@ bool Implementation::valid() {
 
 
 bool Implementation::makeCurrent() {
+    if (m_contextHandle == nullptr) {
+        return m_context->setError(Error::INVALID_CONTEXT, "Context not set up");
+    }
+
     const auto error = CGLSetCurrentContext(m_contextHandle);
     if (error != kCGLNoError) {
         return m_context->setError(Error::INVALID_CONTEXT, "CGLSetCurrentContext failed");
     }
+
     return true;
 }
 

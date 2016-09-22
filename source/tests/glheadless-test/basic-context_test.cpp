@@ -41,6 +41,20 @@ TEST_F(BasicContext_Test, CreateDefault) {
 }
 
 
+TEST_F(BasicContext_Test, ErrorHandling) {
+    ContextFormat format;
+    format.versionMajor = 123;
+    format.versionMinor = 42;
+
+    auto context = ContextFactory::create(format);
+    EXPECT_FALSE(context->valid());
+    EXPECT_EQ(static_cast<int>(Error::INVALID_CONFIGURATION), context->lastErrorCode().value());
+
+    context->makeCurrent();
+    EXPECT_EQ(static_cast<int>(Error::INVALID_CONTEXT), context->lastErrorCode().value());
+}
+
+
 TEST_F(BasicContext_Test, Destroy) {
     auto context = ContextFactory::create();
     ASSERT_TRUE(context->valid());
