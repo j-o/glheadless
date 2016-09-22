@@ -73,6 +73,7 @@ TEST_F(Glfw_Test, MakeCurrent) {
 
     const auto success = mainContext->makeCurrent();
     EXPECT_TRUE(success);
+    mainContext->doneCurrent();
 
     auto ret = std::async(std::launch::async, [] (Context* mainContext) {
         auto workerContext = ContextFactory::create(mainContext);
