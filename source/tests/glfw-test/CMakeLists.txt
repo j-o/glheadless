@@ -1,9 +1,14 @@
 
-# 
+#
 # External dependencies
-# 
+#
 
 find_package(GLFW QUIET)
+
+if (NOT GLFW_FOUND)
+    message("Example ${target} skipped: GLFW not found")
+    return()
+endif()
 
 
 # 
@@ -11,14 +16,13 @@ find_package(GLFW QUIET)
 # 
 
 # Target name
-set(target glfw-interop)
-
+set(target glfw-test)
 # Exit here if required dependencies are not met
 if (NOT GLFW_FOUND)
-    message("Example ${target} skipped: GLFW not found")
+    message("Test ${target} skipped: GLFW not found")
     return()
 endif()
-message(STATUS "Example ${target}")
+message(STATUS "Test ${target}")
 
 
 # 
@@ -27,6 +31,7 @@ message(STATUS "Example ${target}")
 
 set(sources
     main.cpp
+    glfw_test.cpp
 )
 
 
@@ -36,7 +41,6 @@ set(sources
 
 # Build executable
 add_executable(${target}
-    MACOSX_BUNDLE
     ${sources}
 )
 
@@ -64,6 +68,7 @@ target_include_directories(${target}
     ${DEFAULT_INCLUDE_DIRECTORIES}
     ${GLFW_INCLUDE_DIR}
     ${PROJECT_BINARY_DIR}/source/include
+    ${PROJECT_SOURCE_DIR}/source/glheadless/source
 )
 
 
@@ -76,6 +81,7 @@ target_link_libraries(${target}
     ${DEFAULT_LIBRARIES}
     ${GLFW_LIBRARIES}
     ${META_PROJECT_NAME}::glheadless
+    gmock-dev
 )
 
 
@@ -107,20 +113,3 @@ target_link_libraries(${target}
     PRIVATE
     ${DEFAULT_LINKER_OPTIONS}
 )
-
-
-# 
-# Deployment
-# 
-
-# Executable
-install(TARGETS ${target}
-    RUNTIME DESTINATION ${INSTALL_BIN} COMPONENT examples
-    BUNDLE  DESTINATION ${INSTALL_BIN} COMPONENT examples
-)
-
-if (OPTION_SELF_CONTAINED)
-    install(FILES ${GLFW_BINARY}
-        DESTINATION ${INSTALL_BIN} COMPONENT examples
-    )
-endif()
