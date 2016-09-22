@@ -19,13 +19,16 @@ using namespace glheadless;
 
 int main(int /*argc*/, char* /*argv*/[]) {
     //! [Creating a context]
-    auto context = ContextFactory::create();
+    ContextFormat format;
+    format.versionMajor = 3;
+    format.versionMinor = 2;
+    auto context = ContextFactory::create(format);
     //! [Creating a context]
 
 
     //! [Checking for errors]
     if (!context->valid()) {
-        std::cerr << context->lastErrorMessage() << ": " << context->lastErrorCode().message() << " (" << context->lastErrorCode() << ")" << std::endl;
+        std::cerr << context->lastErrorCode().message() << ": " << context->lastErrorMessage() << std::endl;
         return EXIT_FAILURE;
     }
     //! [Checking for errors]

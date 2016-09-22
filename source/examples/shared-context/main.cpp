@@ -11,42 +11,41 @@
 #endif
 
 #include <glheadless/Context.h>
+#include <glheadless/ContextFactory.h>
 
 
 using namespace glheadless;
 
 
 int main(int /*argc*/, char* /*argv*/[]) {
-    Context context;
-    context.create();
+    auto context = ContextFactory::create();
 
-    if (!context.valid()) {
-        std::cerr << context.lastErrorMessage() << ": " << context.lastErrorCode().message() << " (" << context.lastErrorCode() << ")" << std::endl;
+    if (!context->valid()) {
+        std::cerr << context->lastErrorMessage() << ": " << context->lastErrorCode().message() << " (" << context->lastErrorCode() << ")" << std::endl;
         return EXIT_FAILURE;
     }
 
-    context.makeCurrent();
+    context->makeCurrent();
 
     auto versionString = reinterpret_cast<const char*>(glGetString(GL_VERSION));
     std::cout << "Created context with version " << versionString << std::endl;
 
-    context.doneCurrent();
+    context->doneCurrent();
 
 
-    Context shared;
-    shared.create(context);
+    auto shared = ContextFactory::create(context.get());
 
-    if (!shared.valid()) {
-        std::cerr << shared.lastErrorMessage() << ": " << shared.lastErrorCode().message() << " (" << shared.lastErrorCode() << ")" << std::endl;
+    if (!shared->valid()) {
+        std::cerr << shared->lastErrorMessage() << ": " << shared->lastErrorCode().message() << " (" << shared->lastErrorCode() << ")" << std::endl;
         return EXIT_FAILURE;
     }
 
-    shared.makeCurrent();
+    shared->makeCurrent();
 
     versionString = reinterpret_cast<const char*>(glGetString(GL_VERSION));
     std::cout << "Created shared context with version " << versionString << std::endl;
 
-    shared.doneCurrent();
+    shared->doneCurrent();
 
     return EXIT_SUCCESS;
 }
