@@ -4,8 +4,6 @@
 #include <unordered_map>
 #include <memory>
 
-#include <glheadless/Context.h>
-
 
 #define GLHEADLESS_REGISTER_IMPLEMENTATION(api, clazz) \
 namespace { static const auto _registered = AbstractImplementation::registerImplementation(#api, [] { return new clazz(); }); }
@@ -14,6 +12,7 @@ namespace { static const auto _registered = AbstractImplementation::registerImpl
 namespace glheadless {
 
 
+class Context;
 struct ContextFormat;
 
 

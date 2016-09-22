@@ -1,6 +1,7 @@
 #include "AbstractImplementation.h"
 
 #include <cassert>
+#include <string>
 
 
 namespace glheadless {

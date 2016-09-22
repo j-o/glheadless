@@ -74,8 +74,6 @@ if(WIN32)
     )
 elseif(APPLE)
     set(sources ${sources}
-        ${source_path}/cgl/error.h
-        ${source_path}/cgl/error.cpp
         ${source_path}/cgl/Implementation.h
         ${source_path}/cgl/Implementation.cpp
     )

@@ -2,6 +2,8 @@
 
 #include "AbstractImplementation.h"
 
+#include <glheadless/Context.h>
+
 
 namespace glheadless {
 

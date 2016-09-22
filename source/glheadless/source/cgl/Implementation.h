@@ -3,33 +3,37 @@
 #include "../AbstractImplementation.h"
 
 #include <OpenGL/CGLTypes.h>
-#include <glheadless/ContextFormat.h>
 
 
 namespace glheadless {
+namespace cgl {
 
 
 class Implementation : public AbstractImplementation {
 public:
+    Implementation();
+    virtual ~Implementation();
+
     virtual std::unique_ptr<Context> getCurrent() override;
-
     virtual std::unique_ptr<Context> create(const ContextFormat& format) override;
-
     virtual std::unique_ptr<Context> create(const Context* shared, const ContextFormat& format) override;
+    virtual bool destroy() override;
+    virtual bool valid() override;
+    virtual bool makeCurrent() override;
+    virtual bool doneCurrent() override;
 
-    virtual bool destroy(Context* context) override;
-
-    virtual bool valid(const Context* context) override;
-
-    virtual bool makeCurrent(Context* context) override;
-
-    virtual bool doneCurrent(Context* context) override;
 
 private:
-    bool setPixelFormat(Context* context, const ContextFormat& format);
+    void setPixelFormat(const ContextFormat& format);
+    void createContext(CGLContextObj shared);
 
-    bool createContext(Context* context, CGLContextObj shared);
+
+private:
+    CGLContextObj m_contextHandle;
+    CGLPixelFormatObj m_pixelFormatHandle;
+    bool m_owning;
 };
 
-    
+
+}  // namespace cgl
 }  // namespace glheadless
