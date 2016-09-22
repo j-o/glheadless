@@ -3,7 +3,6 @@
 #include <atomic>
 #include <mutex>
 
-#include <glheadless/ExceptionTrigger.h>
 #include <glheadless/error.h>
 
 #include "../InternalException.h"
@@ -52,7 +51,7 @@ Platform::Platform()
         const auto extensions = std::string(eglQueryString(m_display, EGL_EXTENSIONS));
         const auto pos = extensions.find("EGL_KHR_create_context");
         if (pos == std::string::npos) {
-            throw InternalException(Error::INVALID_CONFIGURATION, "OpenGL > 2 requires EGL 1.5 or EGL_KHR_create_context extension. You have version " + std::to_string(major) + "." + std::to_string(minor), ExceptionTrigger::CREATE);
+            throw InternalException(Error::INVALID_CONFIGURATION, "OpenGL > 2 requires EGL 1.5 or EGL_KHR_create_context extension. You have version " + std::to_string(major) + "." + std::to_string(minor));
         }
         m_version15 = false;
     }

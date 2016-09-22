@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 
+#include <glheadless/Context.h>
 #include <glheadless/ContextFormat.h>
 
 #include "../InternalException.h"
@@ -161,13 +162,13 @@ std::unique_ptr<Context> Implementation::getCurrent() {
 
     m_contextHandle = glXGetCurrentContext();
     if (m_contextHandle == nullptr) {
-        context->setError(Error::INVALID_CONTEXT, "glXGetCurrentContext returned nullptr", ExceptionTrigger::CREATE);
+        context->setError(Error::INVALID_CONTEXT, "glXGetCurrentContext returned nullptr");
         return context;
     }
 
     m_drawable = glXGetCurrentDrawable();
     if (m_drawable == 0) {
-        context->setError(Error::INVALID_CONTEXT, "glXGetCurrentDrawable returned nullptr", ExceptionTrigger::CREATE);
+        context->setError(Error::INVALID_CONTEXT, "glXGetCurrentDrawable returned nullptr");
         return context;
     }
 
@@ -182,7 +183,7 @@ std::unique_ptr<Context> Implementation::create(const ContextFormat& format) {
     try {
         createContext(nullptr, format);
     } catch (InternalException& e) {
-        m_context->setError(e.code(), e.message(), e.trigger());
+        m_context->setError(e.code(), e.message());
     }
 
     return context;
@@ -197,7 +198,7 @@ std::unique_ptr<Context> Implementation::create(const Context* shared, const Con
     try {
         createContext(sharedImplementation->m_contextHandle, format);
     } catch (InternalException& e) {
-        m_context->setError(e.code(), e.message(), e.trigger());
+        m_context->setError(e.code(), e.message());
     }
 
     return context;
@@ -240,9 +241,13 @@ bool Implementation::valid() {
 bool Implementation::makeCurrent() {
     XErrorHandler xErrorHandler;
 
+    if (m_contextHandle == nullptr) {
+        return m_context->setError(Error::INVALID_CONTEXT, "Context not set up");
+    }
+
     const auto success = glXMakeContextCurrent(Platform::instance()->display(), m_drawable, m_drawable, m_contextHandle);
     if (!success) {
-        return m_context->setError(Error::INVALID_CONTEXT, "glXMakeContextCurrent failed (" + xErrorHandler.errorString() + ")", ExceptionTrigger::CHANGE_CURRENT);
+        return m_context->setError(Error::INVALID_CONTEXT, "glXMakeContextCurrent failed (" + xErrorHandler.errorString() + ")");
     }
     return true;
 }
@@ -253,7 +258,7 @@ bool Implementation::doneCurrent() {
 
     const auto success = glXMakeContextCurrent(Platform::instance()->display(), None, None, nullptr);
     if (!success) {
-        return m_context->setError(Error::INVALID_CONTEXT, "glXMakeContextCurrent with nullptr failed (" + xErrorHandler.errorString() + ")", ExceptionTrigger::CHANGE_CURRENT);
+        return m_context->setError(Error::INVALID_CONTEXT, "glXMakeContextCurrent with nullptr failed (" + xErrorHandler.errorString() + ")");
     }
     return true;
 }
@@ -273,7 +278,7 @@ void Implementation::createContext(GLXContext shared, const ContextFormat& forma
     int fbCount;
     GLXFBConfig* fbConfig = glXChooseFBConfig(display, DefaultScreen(display), nullptr, &fbCount);
     if (fbConfig == nullptr) {
-        throw InternalException(Error::INVALID_CONFIGURATION, "glXChooseFBConfig returned nullptr", ExceptionTrigger::CREATE);
+        throw InternalException(Error::INVALID_CONFIGURATION, "glXChooseFBConfig returned nullptr");
     }
     EnsureAtExit freeFBConfigAtExit([fbConfig] { XFree(fbConfig); });
 
@@ -285,7 +290,7 @@ void Implementation::createContext(GLXContext shared, const ContextFormat& forma
     m_contextHandle = Platform::instance()->glXCreateContextAttribsARB(display, fbConfig[0], shared, True, contextAttributes.data());
     XSync(display, false);
     if (m_contextHandle == nullptr || xErrorHandler.errorCode() != Success) {
-        throw InternalException(Error::INVALID_CONFIGURATION, "glXCreateContextAttribsARB returned nullptr (" + xErrorHandler.errorString() + ")", ExceptionTrigger::CREATE);
+        throw InternalException(Error::INVALID_CONFIGURATION, "glXCreateContextAttribsARB returned nullptr (" + xErrorHandler.errorString() + ")");
     }
 
     const int pBufferAttributes[] = {

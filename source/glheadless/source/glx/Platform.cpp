@@ -3,7 +3,6 @@
 #include <atomic>
 #include <mutex>
 
-#include <glheadless/ExceptionTrigger.h>
 #include <glheadless/error.h>
 
 #include "../InternalException.h"
@@ -46,13 +45,13 @@ Platform::Platform()
     glXCreateContextAttribsARB = reinterpret_cast<PFNGLXCREATECONTEXTATTRIBSARBPROC>(
         glXGetProcAddress(reinterpret_cast<const GLubyte*>("glXCreateContextAttribsARB")));
     if (glXCreateContextAttribsARB == nullptr) {
-        throw InternalException(Error::INVALID_CONFIGURATION, "glXGetProcAddress failed on glXCreateContextAttribs", ExceptionTrigger::CREATE);
+        throw InternalException(Error::INVALID_CONFIGURATION, "glXGetProcAddress failed on glXCreateContextAttribs");
     }
 
     // connect to x server
     m_display = XOpenDisplay(nullptr);
     if (m_display == nullptr) {
-        throw InternalException(Error::INVALID_CONFIGURATION, "XOpenDisplay returned nullptr", ExceptionTrigger::CREATE);
+        throw InternalException(Error::INVALID_CONFIGURATION, "XOpenDisplay returned nullptr");
     }
 }
 

@@ -6,6 +6,7 @@
 
 #include <EGL/eglext.h>
 
+#include <glheadless/Context.h>
 #include <glheadless/ContextFormat.h>
 
 #include "../InternalException.h"
@@ -126,7 +127,7 @@ std::unique_ptr<Context> Implementation::getCurrent() {
 
     m_contextHandle = eglGetCurrentContext();
     if (m_contextHandle == EGL_NO_CONTEXT) {
-        context->setError(Error::INVALID_CONTEXT, "glXGetCurrentContext returned EGL_NO_CONTEXT", ExceptionTrigger::CREATE);
+        context->setError(Error::INVALID_CONTEXT, "glXGetCurrentContext returned EGL_NO_CONTEXT");
         return context;
     }
 
@@ -141,7 +142,7 @@ std::unique_ptr<Context> Implementation::create(const ContextFormat& format) {
     try {
         createContext(EGL_NO_CONTEXT, format);
     } catch (InternalException& e) {
-        context->setError(e.code(), e.message(), e.trigger());
+        context->setError(e.code(), e.message());
     }
 
     return context;
@@ -156,7 +157,7 @@ std::unique_ptr<Context> Implementation::create(const Context* shared, const Con
     try {
         createContext(sharedImplementation->m_contextHandle, format);
     } catch (InternalException& e) {
-        context->setError(e.code(), e.message(), e.trigger());
+        context->setError(e.code(), e.message());
     }
 
     return context;
@@ -185,9 +186,13 @@ bool Implementation::valid() {
 bool Implementation::makeCurrent() {
     bindApi();
 
+    if (m_contextHandle == EGL_NO_CONTEXT) {
+        return m_context->setError(Error::INVALID_CONTEXT, "Context not set up");
+    }
+
     const auto success = eglMakeCurrent(Platform::instance()->display(), EGL_NO_SURFACE, EGL_NO_SURFACE, m_contextHandle);
     if (!success) {
-        return m_context->setError(Error::INVALID_CONTEXT, "glXMakeContextCurrent failed: " + getErrorString(), ExceptionTrigger::CHANGE_CURRENT);
+        return m_context->setError(Error::INVALID_CONTEXT, "glXMakeContextCurrent failed: " + getErrorString());
     }
     return true;
 }
@@ -198,7 +203,7 @@ bool Implementation::doneCurrent() {
 
     const auto success = eglMakeCurrent(Platform::instance()->display(), EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
     if (!success) {
-        return m_context->setError(Error::INVALID_CONTEXT, "glXMakeContextCurrent with EGL_NO_CONTEXT failed: " + getErrorString(), ExceptionTrigger::CHANGE_CURRENT);
+        return m_context->setError(Error::INVALID_CONTEXT, "glXMakeContextCurrent with EGL_NO_CONTEXT failed: " + getErrorString());
     }
     return true;
 }
@@ -221,7 +226,7 @@ void Implementation::createContext(EGLContext shared, const ContextFormat& forma
     EGLConfig config;
     auto success = eglChooseConfig(display, configAttributes, &config, 1, &numConfigs);
     if (!success) {
-        throw InternalException(Error::INVALID_CONFIGURATION, "eglChooseConfig failed: " + getErrorString(), ExceptionTrigger::CREATE);
+        throw InternalException(Error::INVALID_CONFIGURATION, "eglChooseConfig failed: " + getErrorString());
     }
 
 
@@ -234,7 +239,7 @@ void Implementation::createContext(EGLContext shared, const ContextFormat& forma
     const auto contextAttributes = createContextAttributeList(format);
     m_contextHandle = eglCreateContext(display, config, shared, contextAttributes.data());
     if (m_contextHandle == EGL_NO_CONTEXT) {
-        throw InternalException(Error::INVALID_CONFIGURATION, "eglCreateContext failed: " + getErrorString(), ExceptionTrigger::CREATE);
+        throw InternalException(Error::INVALID_CONFIGURATION, "eglCreateContext failed: " + getErrorString());
     }
 }
 
