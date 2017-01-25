@@ -48,4 +48,4 @@ Currently, the following platforms are supported:
 
 ### Compilers
 
-A C++14 compatible compiler is required to compile *glheadless*.
+A C++11 compatible compiler is required to compile *glheadless*.

@@ -121,7 +121,7 @@ Implementation::~Implementation() {
 
 
 std::unique_ptr<Context> Implementation::getCurrent() {
-    auto context = std::make_unique<Context>(this);
+    auto context = std::unique_ptr<Context>(new Context(this));
     m_context = context.get();
     m_owning = false;
 
@@ -136,7 +136,7 @@ std::unique_ptr<Context> Implementation::getCurrent() {
 
 
 std::unique_ptr<Context> Implementation::create(const ContextFormat& format) {
-    auto context = std::make_unique<Context>(this);
+    auto context = std::unique_ptr<Context>(new Context(this));
     m_context = context.get();
 
     try {
@@ -151,7 +151,7 @@ std::unique_ptr<Context> Implementation::create(const ContextFormat& format) {
 
 std::unique_ptr<Context> Implementation::create(const Context* shared, const ContextFormat& format) {
     auto sharedImplementation = static_cast<const Implementation*>(shared->implementation());
-    auto context = std::make_unique<Context>(this);
+    auto context = std::unique_ptr<Context>(new Context(this));
     m_context = context.get();
 
     try {
