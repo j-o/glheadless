@@ -161,13 +161,17 @@ target_include_directories(${target}
 # Libraries
 # 
 
+set(LIBRARIES ${OPENGL_LIBRARIES})
+if(OPTION_EGL)
+    set(LIBRARIES "${LIBRARIES};${EGL_LIBRARIES}")
+endif()
+
 target_link_libraries(${target}
     PRIVATE
 
     PUBLIC
     ${DEFAULT_LIBRARIES}
-    ${OPENGL_LIBRARIES}
-    ${EGL_LIBRARIES}
+    ${LIBRARIES}
 
     INTERFACE
 )
