@@ -5,26 +5,17 @@
 
 find_package(OpenGL REQUIRED)
 
-if(UNIX AND NOT APPLE)
-    find_package(EGL)
+if(OPTION_EGL)
+    find_package(EGL REQUIRED)
 endif()
 
 
 # 
 # Library name and options
-# 
+#
 
 # Target name
 set(target glheadless)
-
-if(UNIX AND NOT APPLE)
-    if(EGL_FOUND)
-        message(STATUS "Defaulting to EGL implementation. Unset OPTION_LINUX_USE_EGL to use GLX.")
-        option(OPTION_LINUX_USE_EGL "Use EGL instead of GLX implementation on Linux" ON)
-    else()
-        message(STATUS "EGL not available, using GLX")
-    endif()
-endif()
 
 # Exit here if required dependencies are not met
 message(STATUS "Lib ${target}")
@@ -60,30 +51,30 @@ set(sources
     ${source_path}/InternalException.cpp
 )
 
-if(WIN32)
+if(OPTION_EGL)
     set(sources ${sources}
-        ${source_path}/wgl/wglext.h
-        ${source_path}/wgl/Implementation.h
-        ${source_path}/wgl/Implementation.cpp
-        ${source_path}/wgl/Platform.h
-        ${source_path}/wgl/Platform.cpp
-        ${source_path}/wgl/Window.h
-        ${source_path}/wgl/Window.cpp
+        ${source_path}/egl/Implementation.h
+        ${source_path}/egl/Implementation.cpp
+        ${source_path}/egl/Platform.h
+        ${source_path}/egl/Platform.cpp
     )
-elseif(APPLE)
-    set(sources ${sources}
-        ${source_path}/cgl/Implementation.h
-        ${source_path}/cgl/Implementation.cpp
-    )
-elseif(UNIX)
-    if (EGL_FOUND AND OPTION_LINUX_USE_EGL)
+else()
+    if(WIN32)
         set(sources ${sources}
-            ${source_path}/egl/Implementation.h
-            ${source_path}/egl/Implementation.cpp
-            ${source_path}/egl/Platform.h
-            ${source_path}/egl/Platform.cpp
+            ${source_path}/wgl/wglext.h
+            ${source_path}/wgl/Implementation.h
+            ${source_path}/wgl/Implementation.cpp
+            ${source_path}/wgl/Platform.h
+            ${source_path}/wgl/Platform.cpp
+            ${source_path}/wgl/Window.h
+            ${source_path}/wgl/Window.cpp
         )
-    else()
+    elseif(APPLE)
+        set(sources ${sources}
+            ${source_path}/cgl/Implementation.h
+            ${source_path}/cgl/Implementation.cpp
+        )
+    elseif(UNIX)
         set(sources ${sources}
             ${source_path}/glx/Implementation.h
             ${source_path}/glx/Implementation.cpp
