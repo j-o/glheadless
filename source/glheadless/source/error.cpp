@@ -3,6 +3,8 @@
 #include <array>
 #include <map>
 
+#include <glheadless/glheadless_features.h>
+
 
 namespace glheadless {
 
@@ -20,7 +22,7 @@ class ErrorCategory : public std::error_category {
 public:
     ErrorCategory();
 
-    virtual const char* name() const noexcept override;
+    virtual const char* name() const GLHEADLESS_NOEXCEPT override;
 
     virtual std::string message(int condition) const override;
 };
@@ -31,7 +33,7 @@ ErrorCategory::ErrorCategory()
 }
 
 
-const char* ErrorCategory::name() const noexcept {
+const char* ErrorCategory::name() const GLHEADLESS_NOEXCEPT {
     return "glheadless";
 }
 
