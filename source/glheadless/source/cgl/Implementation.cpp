@@ -169,6 +169,11 @@ bool Implementation::destroy() {
 }
 
 
+long long Implementation::nativeHandle() {
+    return reinterpret_cast<long long>(m_contextHandle);
+}
+
+
 bool Implementation::valid() {
     return m_contextHandle != nullptr;
 }
@@ -194,6 +199,11 @@ bool Implementation::doneCurrent() {
         return m_context->setError(Error::INVALID_CONTEXT, "CGLSetCurrentContext failed");
     }
     return true;
+}
+
+
+void (*Implementation::getProcAddress(const char * name))() {
+    return cglGetProcAddress(name);
 }
 
 

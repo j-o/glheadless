@@ -81,6 +81,18 @@ public:
     bool valid() const;
 
     /*!
+     * \return the native context handle from the OS
+     */
+    unsigned long long nativeHandle() const;
+
+    /*!
+     * \brief Resolve an OpenGL function by calling the platform-specfic xyzGetProcAddress
+     *
+     * \return a generic pointer to the requested function, or nullptr if it does not exist
+     */
+    void (*getProcAddress(const char * name) const)();
+
+    /*!
      * \brief For internal use.
      *
      * Sets lastErrorCode and lastErrorMessage and triggers exception, if enabled.

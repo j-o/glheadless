@@ -36,7 +36,7 @@ std::vector<int> createContextAttributeList(const ContextFormat& format) {
         attributes[WGL_CONTEXT_MAJOR_VERSION_ARB] = format.versionMajor;
         attributes[WGL_CONTEXT_MINOR_VERSION_ARB] = format.versionMinor;
     }
-    
+
     if (format.debug) {
         attributes[WGL_CONTEXT_FLAGS_ARB] = WGL_CONTEXT_DEBUG_BIT_ARB;
     }
@@ -156,6 +156,11 @@ bool Implementation::destroy() {
 }
 
 
+long long Implementation::nativeHandle() {
+    return reinterpret_cast<long long>(m_contextHandle);
+}
+
+
 bool Implementation::valid() {
     return m_contextHandle != nullptr
         && m_window != nullptr;
@@ -180,6 +185,11 @@ bool Implementation::doneCurrent() {
         return m_context->setError(Error::INVALID_CONTEXT, "wglMakeCurrent with nullptr failed");
     }
     return true;
+}
+
+
+void (*Implementation::getProcAddress(const char * name))() {
+    return reinterpret_cast<void(*)()>(wglGetProcAddress(name));
 }
 
 

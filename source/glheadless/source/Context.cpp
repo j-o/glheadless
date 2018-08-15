@@ -36,6 +36,16 @@ bool Context::valid() const {
 }
 
 
+unsigned long long Context::nativeHandle() const {
+    return m_implementation->nativeHandle();
+}
+
+
+void (*Context::getProcAddress(const char * name) const)() {
+    return m_implementation->getProcAddress(name);
+}
+
+
 bool Context::setError(Error code, const std::string& message) {
     return setError(make_error_code(code), message);
 }
