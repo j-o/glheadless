@@ -4,6 +4,8 @@
 #include <set>
 #include <map>
 
+#include <dlfcn.h>
+
 #include <OpenGL/OpenGL.h>
 #include <OpenGL/gl.h>
 
@@ -203,7 +205,9 @@ bool Implementation::doneCurrent() {
 
 
 void (*Implementation::getProcAddress(const char * name))() {
-    return cglGetProcAddress(name);
+    static auto framework = dlopen("/System/Library/Frameworks/OpenGL.framework/Versions/Current/OpenGL", RTLD_LAZY);
+
+    return reinterpret_cast<void(*)()>(framework != nullptr ? dlsym(framework, name) : nullptr);
 }
 
 
